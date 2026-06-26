@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import {
-  isConnected as checkFreighterConnected,
-  requestAccess,
-  getAddress,
-  signTransaction
-} from '@stellar/freighter-api';
+  StellarWalletsKit,
+  Networks as WalletKitNetworks
+} from '@creit.tech/stellar-wallets-kit';
+import { FreighterModule } from '@creit.tech/stellar-wallets-kit/modules/freighter';
+import { AlbedoModule } from '@creit.tech/stellar-wallets-kit/modules/albedo';
+import { xBullModule } from '@creit.tech/stellar-wallets-kit/modules/xbull';
 import {
   TransactionBuilder,
   Operation,
   Asset,
   Networks,
   Horizon,
+  rpc,
+  Address,
+  scValToNative,
+  nativeToScVal,
+  Account,
   Memo
 } from '@stellar/stellar-sdk';
 import {
@@ -24,9 +30,10 @@ import {
   PlusCircle,
   ArrowUpRight,
   ArrowDownLeft,
-  AlertTriangle,
   Info,
-  LogOut
+  LogOut,
+  Cpu,
+  Layers
 } from 'lucide-react';
 
 interface PaymentTx {
@@ -40,22 +47,33 @@ interface PaymentTx {
 }
 
 function App() {
-  // Wallet state
-  const [isFreighterInstalled, setIsFreighterInstalled] = useState<boolean | null>(null);
+  // Wallet State
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
   const [isAccountActivated, setIsAccountActivated] = useState<boolean>(true);
   
-  // UI Loading States
+  // UI States
   const [isConnecting, setIsConnecting] = useState(false);
   const [isFunding, setIsFunding] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<'classic' | 'soroban'>('classic');
 
-  // Form State
+  // Form State - Classic
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
+
+  // Form State - Soroban
+  const [contractRecipient, setContractRecipient] = useState('');
+  const [contractAmount, setContractAmount] = useState('');
+
+  // Soroban Contract State
+  const contractId = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
+  const [contractSymbol, setContractSymbol] = useState<string | null>(null);
+  const [contractDecimals, setContractDecimals] = useState<number | null>(null);
+  const [contractBalance, setContractBalance] = useState<string | null>(null);
+  const [loadingContract, setLoadingContract] = useState(false);
 
   // Transaction Status
   const [txStatus, setTxStatus] = useState<{
@@ -68,35 +86,119 @@ function App() {
   const [history, setHistory] = useState<PaymentTx[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // Horizon Server Instance (Stellar Testnet)
+  // Server Instances
   const HORIZON_URL = 'https://horizon-testnet.stellar.org';
+  const SOROBAN_RPC_URL = 'https://soroban-testnet.stellar.org';
+  
   const server = new Horizon.Server(HORIZON_URL);
+  const rpcServer = new rpc.Server(SOROBAN_RPC_URL);
 
-  // Check if Freighter is installed on mount
+  // Initialize Stellar Wallets Kit on mount
   useEffect(() => {
-    const verifyFreighter = async () => {
-      try {
-        const result = await checkFreighterConnected();
-        setIsFreighterInstalled(!!result.isConnected);
-        
-        // If already connected, fetch address automatically
-        if (result.isConnected) {
-          const addrResult = await getAddress();
-          if (addrResult && addrResult.address) {
-            setWalletAddress(addrResult.address);
-            await fetchBalance(addrResult.address);
-            await fetchTxHistory(addrResult.address);
+    try {
+      StellarWalletsKit.init({
+        modules: [
+          new FreighterModule(),
+          new AlbedoModule(),
+          new xBullModule()
+        ],
+        network: WalletKitNetworks.TESTNET
+      });
+      
+      // Auto-check if wallet address is stored/connected
+      const checkCurrentAddress = async () => {
+        try {
+          const { address } = await StellarWalletsKit.getAddress();
+          if (address) {
+            setWalletAddress(address);
+            await loadAllData(address);
           }
+        } catch {
+          // No active wallet address stored yet, ignore
         }
-      } catch (err) {
-        console.error("Error checking Freighter installation:", err);
-        setIsFreighterInstalled(false);
-      }
-    };
-    verifyFreighter();
+      };
+      checkCurrentAddress();
+    } catch (err) {
+      console.error("Error initializing Stellar Wallets Kit:", err);
+    }
   }, []);
 
-  // Fetch account balance and activation status
+  // Fetch contract metadata (symbol, decimals, balance)
+  const fetchContractMetadata = async (address: string) => {
+    setLoadingContract(true);
+    try {
+      // Create a dummy account for read-only simulations
+      const sourceAccount = new Account(address, '1');
+
+      // 1. Query symbol()
+      const symbolTx = new TransactionBuilder(sourceAccount, {
+        fee: '100',
+        networkPassphrase: Networks.TESTNET
+      })
+        .addOperation(
+          Operation.invokeContractFunction({
+            contract: contractId,
+            function: 'symbol',
+            args: []
+          })
+        )
+        .setTimeout(30)
+        .build();
+
+      const symbolRes = await rpcServer.simulateTransaction(symbolTx) as any;
+      if (symbolRes.result && symbolRes.result.retval) {
+        setContractSymbol(scValToNative(symbolRes.result.retval).toString());
+      }
+
+      // 2. Query decimals()
+      const decimalsTx = new TransactionBuilder(sourceAccount, {
+        fee: '100',
+        networkPassphrase: Networks.TESTNET
+      })
+        .addOperation(
+          Operation.invokeContractFunction({
+            contract: contractId,
+            function: 'decimals',
+            args: []
+          })
+        )
+        .setTimeout(30)
+        .build();
+
+      const decimalsRes = await rpcServer.simulateTransaction(decimalsTx) as any;
+      if (decimalsRes.result && decimalsRes.result.retval) {
+        setContractDecimals(Number(scValToNative(decimalsRes.result.retval)));
+      }
+
+      // 3. Query balance(Address)
+      const balanceTx = new TransactionBuilder(sourceAccount, {
+        fee: '100',
+        networkPassphrase: Networks.TESTNET
+      })
+        .addOperation(
+          Operation.invokeContractFunction({
+            contract: contractId,
+            function: 'balance',
+            args: [new Address(address).toScVal()]
+          })
+        )
+        .setTimeout(30)
+        .build();
+
+      const balanceRes = await rpcServer.simulateTransaction(balanceTx) as any;
+      if (balanceRes.result && balanceRes.result.retval) {
+        const rawBal = scValToNative(balanceRes.result.retval);
+        const formatted = (Number(rawBal) / Math.pow(10, 7)).toFixed(4);
+        setContractBalance(formatted);
+      }
+    } catch (err) {
+      console.error('Error fetching contract metadata:', err);
+    } finally {
+      setLoadingContract(false);
+    }
+  };
+
+  // Fetch classic native account balance
   const fetchBalance = async (address: string) => {
     try {
       const response = await fetch(`${HORIZON_URL}/accounts/${address}`);
@@ -157,59 +259,68 @@ function App() {
     }
   };
 
-  // Main refresh handler
+  // Helper to load all account metrics
+  const loadAllData = async (address: string) => {
+    await Promise.all([
+      fetchBalance(address),
+      fetchTxHistory(address),
+      fetchContractMetadata(address)
+    ]);
+  };
+
+  // Refresh trigger
   const handleRefresh = async () => {
     if (!walletAddress) return;
     setIsRefreshing(true);
-    await Promise.all([
-      fetchBalance(walletAddress),
-      fetchTxHistory(walletAddress)
-    ]);
+    await loadAllData(walletAddress);
     setIsRefreshing(false);
   };
 
-  // Connect Wallet Action
+  // Connect Wallet using Stellar Wallets Kit Modal
   const connectWallet = async () => {
     setIsConnecting(true);
     setTxStatus({ type: 'idle', message: '' });
     try {
-      // 1. Request access from Freighter (opens popup)
-      const accessResult = await requestAccess();
+      // Open the connection modal
+      const { address } = await StellarWalletsKit.authModal();
       
-      if (accessResult && accessResult.error) {
-        throw new Error(accessResult.error);
-      }
-      
-      const publicKey = accessResult?.address;
-      
-      if (publicKey) {
-        setWalletAddress(publicKey);
-        await fetchBalance(publicKey);
-        await fetchTxHistory(publicKey);
+      if (address) {
+        setWalletAddress(address);
+        await loadAllData(address);
       } else {
-        throw new Error('Could not retrieve public key. Please check Freighter permissions.');
+        throw new Error('Connection rejected or closed.');
       }
     } catch (err: any) {
       console.error('Connection error:', err);
       setTxStatus({
         type: 'error',
-        message: err.message || 'Failed to connect to Freighter wallet.'
+        message: err.message || 'Connection request rejected.'
       });
     } finally {
       setIsConnecting(false);
     }
   };
 
-  // Disconnect Wallet Action
-  const disconnectWallet = () => {
+  // Disconnect Wallet
+  const disconnectWallet = async () => {
+    try {
+      await StellarWalletsKit.disconnect();
+    } catch (err) {
+      console.error("Disconnect error:", err);
+    }
     setWalletAddress(null);
     setBalance(null);
     setHistory([]);
     setIsAccountActivated(true);
+    setContractSymbol(null);
+    setContractDecimals(null);
+    setContractBalance(null);
     setTxStatus({ type: 'idle', message: '' });
     setRecipient('');
     setAmount('');
     setMemo('');
+    setContractRecipient('');
+    setContractAmount('');
   };
 
   // Fund Wallet with Friendbot Faucet
@@ -225,8 +336,7 @@ function App() {
           type: 'success',
           message: 'Success! Your account was funded with 10,000 XLM from Friendbot. It is now activated on Testnet.'
         });
-        await fetchBalance(walletAddress);
-        await fetchTxHistory(walletAddress);
+        await loadAllData(walletAddress);
       } else {
         const errorText = await response.text();
         throw new Error(errorText || 'Friendbot failed to process request');
@@ -242,15 +352,15 @@ function App() {
     }
   };
 
-  // Send XLM Payment
+  // Classic payment flow
   const handleSendPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!walletAddress || !recipient || !amount) return;
 
-    setTxStatus({ type: 'loading', message: 'Preparing transaction envelope...' });
+    setTxStatus({ type: 'loading', message: 'Preparing classic payment transaction...' });
 
     try {
-      // Input Validation
+      // 1. Input validations (Error Type 1)
       if (!recipient.startsWith('G') || recipient.length !== 56) {
         throw new Error('Invalid recipient address format. Stellar addresses are 56 characters and start with G.');
       }
@@ -260,7 +370,7 @@ function App() {
         throw new Error('Please enter a valid amount greater than 0.');
       }
 
-      // Check balance
+      // 2. Insufficient balance checks (Error Type 2)
       if (balance) {
         const currentBalanceVal = parseFloat(balance);
         if (parsedAmount + 0.0001 > currentBalanceVal) {
@@ -268,8 +378,8 @@ function App() {
         }
       }
 
-      // 1. Load sender account to obtain current sequence number
-      setTxStatus({ type: 'loading', message: 'Fetching sender account sequence number...' });
+      // 3. Load account
+      setTxStatus({ type: 'loading', message: 'Fetching sender account details...' });
       let sourceAccount;
       try {
         sourceAccount = await server.loadAccount(walletAddress);
@@ -277,7 +387,7 @@ function App() {
         throw new Error('Sender account is not active on-chain. Please fund it using the Faucet first.');
       }
 
-      // 2. Build transaction
+      // 4. Build transaction
       setTxStatus({ type: 'loading', message: 'Building transaction fee and operations...' });
       const fee = await server.fetchBaseFee();
 
@@ -294,7 +404,6 @@ function App() {
         )
         .setTimeout(60);
 
-      // Add memo if specified
       if (memo.trim()) {
         transactionBuilder.addMemo(Memo.text(memo.trim()));
       }
@@ -302,25 +411,20 @@ function App() {
       const transaction = transactionBuilder.build();
       const xdr = transaction.toXDR();
 
-      // 3. Sign the transaction in Freighter
-      setTxStatus({ type: 'loading', message: 'Awaiting signature in Freighter wallet...' });
-      const signResult = await signTransaction(xdr, { 
-        networkPassphrase: Networks.TESTNET 
+      // 5. Sign the transaction using Stellar Wallets Kit (Error Type 3)
+      setTxStatus({ type: 'loading', message: 'Awaiting signature in connected wallet...' });
+      const { signedTxXdr } = await StellarWalletsKit.signTransaction(xdr, { 
+        networkPassphrase: Networks.TESTNET,
+        address: walletAddress
       });
 
-      if (signResult && signResult.error) {
-        throw new Error(signResult.error);
+      if (!signedTxXdr) {
+        throw new Error('Signing request rejected. Transaction was not signed.');
       }
 
-      const signedXdr = signResult?.signedTxXdr;
-
-      if (!signedXdr) {
-        throw new Error('Signing request rejected or failed. Transaction was not signed.');
-      }
-
-      // 4. Submit to Horizon Network
-      const transactionToSubmit = TransactionBuilder.fromXDR(signedXdr, Networks.TESTNET);
-      setTxStatus({ type: 'loading', message: 'Submitting signed transaction to Horizon Testnet...' });
+      // 6. Submit to Horizon Network
+      setTxStatus({ type: 'loading', message: 'Submitting transaction to Horizon Testnet...' });
+      const transactionToSubmit = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
       const response = await server.submitTransaction(transactionToSubmit);
 
       setTxStatus({
@@ -329,14 +433,11 @@ function App() {
         hash: response.hash,
       });
 
-      // Reset Form fields
       setRecipient('');
       setAmount('');
       setMemo('');
 
-      // Refresh state
-      await fetchBalance(walletAddress);
-      await fetchTxHistory(walletAddress);
+      await loadAllData(walletAddress);
 
     } catch (err: any) {
       console.error('Payment execution failed:', err);
@@ -365,7 +466,145 @@ function App() {
     }
   };
 
-  // Copy wallet address helper
+  // Soroban smart contract payment flow
+  const handleContractTransfer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!walletAddress || !contractRecipient || !contractAmount) return;
+
+    setTxStatus({ type: 'loading', message: 'Preparing Soroban transaction simulation...' });
+
+    try {
+      // 1. Input validations (Error Type 1)
+      if (!contractRecipient.startsWith('G') || contractRecipient.length !== 56) {
+        throw new Error('Invalid recipient address format. It must be a 56-character public key starting with G.');
+      }
+
+      const parsedAmount = parseFloat(contractAmount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        throw new Error('Please enter a valid amount greater than 0.');
+      }
+
+      // 2. Insufficient balance checks (Error Type 2)
+      if (contractBalance) {
+        const currentBalanceVal = parseFloat(contractBalance);
+        if (parsedAmount > currentBalanceVal) {
+          throw new Error(`Insufficient funds on contract. You are trying to transfer ${contractAmount} XLM but only have ${contractBalance} XLM.`);
+        }
+      }
+
+      const decimalsVal = contractDecimals || 7;
+      const rawAmount = BigInt(Math.floor(parsedAmount * Math.pow(10, decimalsVal)));
+
+      // 3. Load account sequence number from Horizon
+      setTxStatus({ type: 'loading', message: 'Fetching sender account details...' });
+      let sourceAccount;
+      try {
+        sourceAccount = await server.loadAccount(walletAddress);
+      } catch (err) {
+        throw new Error('Account is not active yet on Testnet. Please fund it using the Faucet first.');
+      }
+
+      // 4. Build the initial transaction containing invokeContractFunction
+      setTxStatus({ type: 'loading', message: 'Building Soroban transaction...' });
+      
+      const invokeOp = Operation.invokeContractFunction({
+        contract: contractId,
+        function: 'transfer',
+        args: [
+          new Address(walletAddress).toScVal(),
+          new Address(contractRecipient).toScVal(),
+          nativeToScVal(rawAmount, { type: 'i128' })
+        ]
+      });
+
+      const transaction = new TransactionBuilder(sourceAccount, {
+        fee: '100', // Base fee to pass validation, simulation overrides it
+        networkPassphrase: Networks.TESTNET
+      })
+        .addOperation(invokeOp)
+        .setTimeout(60)
+        .build();
+
+      // 5. Simulate the transaction using Soroban RPC to fetch footprints & resource fee
+      setTxStatus({ type: 'loading', message: 'Simulating transaction resources on Soroban RPC...' });
+      const simResult = await rpcServer.simulateTransaction(transaction) as any;
+
+      if (simResult.error) {
+        throw new Error(`Simulation failed: ${simResult.error}`);
+      }
+
+      if (rpc.Api.isSimulationSuccess(simResult)) {
+        // Assemble transaction merges footprints & resource fee
+        setTxStatus({ type: 'loading', message: 'Assembling Soroban transaction envelope...' });
+        const assembledTx = rpc.assembleTransaction(transaction, simResult) as any;
+        
+        // If assembleTransaction returns a Builder, we need to build it first.
+        const xdr = typeof assembledTx.build === 'function' ? assembledTx.build().toXDR() : assembledTx.toXDR();
+
+        // 6. Sign the transaction using Stellar Wallets Kit (Error Type 3)
+        setTxStatus({ type: 'loading', message: 'Awaiting signature in connected wallet...' });
+        const { signedTxXdr } = await StellarWalletsKit.signTransaction(xdr, {
+          networkPassphrase: Networks.TESTNET,
+          address: walletAddress
+        });
+
+        if (!signedTxXdr) {
+          throw new Error('Signing request rejected. Transaction was not signed.');
+        }
+
+        // Parse signed transaction back
+        const signedTx = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
+
+        // 7. Submit to Soroban RPC
+        setTxStatus({ type: 'loading', message: 'Submitting transaction to Soroban network...' });
+        const response = await rpcServer.sendTransaction(signedTx);
+        
+        if (response.status === 'ERROR') {
+          const resErr = (response as any).errorResult || (response as any).errorResultXdr;
+          throw new Error(`Transaction submission error: ${resErr || 'Unknown Soroban error'}`);
+        }
+
+        setTxStatus({ type: 'loading', message: 'Waiting for transaction consensus...' });
+        
+        // Poll for transaction status until complete
+        let statusResponse = await rpcServer.getTransaction(response.hash);
+        let attempts = 0;
+        while (statusResponse.status === 'NOT_FOUND' || statusResponse.status === 'SUCCESS' && !statusResponse.resultMetaXdr) {
+          await new Promise(r => setTimeout(r, 2000));
+          statusResponse = await rpcServer.getTransaction(response.hash);
+          attempts++;
+          if (attempts > 15) break;
+        }
+
+        if (statusResponse.status === 'SUCCESS') {
+          setTxStatus({
+            type: 'success',
+            message: `Successfully transferred ${contractAmount} XLM via Soroban Smart Contract!`,
+            hash: response.hash
+          });
+          
+          setContractRecipient('');
+          setContractAmount('');
+
+          await loadAllData(walletAddress);
+        } else {
+          throw new Error(`Transaction execution failed: ${statusResponse.status}`);
+        }
+
+      } else {
+        throw new Error('Simulation failed. Could not retrieve footprints.');
+      }
+
+    } catch (err: any) {
+      console.error('Soroban payment failed:', err);
+      setTxStatus({
+        type: 'error',
+        message: err.message || err.toString()
+      });
+    }
+  };
+
+  // Copy address helper
   const copyAddress = () => {
     if (!walletAddress) return;
     navigator.clipboard.writeText(walletAddress);
@@ -373,13 +612,13 @@ function App() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Helper: Truncate address
+  // Truncate address
   const truncateAddr = (addr: string) => {
     if (!addr) return '';
     return `${addr.slice(0, 6)}...${addr.slice(-6)}`;
   };
 
-  // Helper: Format date
+  // Format timestamp
   const formatDate = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
@@ -395,16 +634,16 @@ function App() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 className="pulse-glow-text" style={{ fontSize: '2.2rem', margin: 0, fontWeight: 800, background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Stellar QuickPay
+            Stellar QuickPay & Soroban Hub
           </h1>
           <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.95rem' }}>
-            Journey to Mastery &bull; Level 1 White Belt
+            Journey to Mastery &bull; Level 2 Yellow Belt
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '10px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22d3ee', boxShadow: '0 0 8px #22d3ee' }}></span>
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#06b6d4', boxShadow: '0 0 8px #06b6d4' }}></span>
             <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8' }}>Stellar Testnet</span>
           </div>
 
@@ -416,20 +655,6 @@ function App() {
         </div>
       </header>
 
-      {/* Connection Check / Install Warning */}
-      {isFreighterInstalled === false && (
-        <div className="alert alert-danger" style={{ marginBottom: '2rem' }}>
-          <AlertTriangle size={20} />
-          <div>
-            <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Freighter Wallet Not Found</strong>
-            Freighter wallet extension was not detected in this browser. Please install the extension to continue.
-            <a href="https://www.freighter.app/" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: '#06b6d4', fontWeight: 600, marginLeft: '0.5rem', textDecoration: 'none' }}>
-              Install Freighter <ExternalLink size={14} />
-            </a>
-          </div>
-        </div>
-      )}
-
       {/* Core Dashboard / Connection States */}
       {!walletAddress ? (
         <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
@@ -439,7 +664,7 @@ function App() {
             </div>
             <h2 style={{ fontSize: '1.6rem', fontWeight: 700, margin: '0 0 0.75rem 0' }}>Connect Your Wallet</h2>
             <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.6', margin: '0 0 2rem 0' }}>
-              To complete the Level 1 tasks, connect your Freighter wallet on Testnet. You will be able to check your XLM balance, request testnet funding, and send test payments.
+              Connect your wallet on testnet to continue. The multi-wallet adapter supports Freighter, Albedo, and xBull wallets.
             </p>
             
             <button 
@@ -451,12 +676,12 @@ function App() {
               {isConnecting ? (
                 <>
                   <RefreshCw size={18} className="spinner" />
-                  Connecting Wallet...
+                  Select Wallet...
                 </>
               ) : (
                 <>
                   <Wallet size={18} />
-                  Connect Freighter Wallet
+                  Connect Wallet
                 </>
               )}
             </button>
@@ -513,7 +738,9 @@ function App() {
             {/* Account Card */}
             <div className="glass-panel" style={{ padding: '1.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                <span className="badge badge-info">Freighter Account</span>
+                <span className="badge badge-info" style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                  <Wallet size={12} /> Connected
+                </span>
                 <button 
                   className="btn btn-secondary" 
                   onClick={handleRefresh} 
@@ -537,7 +764,7 @@ function App() {
               </div>
 
               <div>
-                <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '0.25rem' }}>Native Balance</span>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '0.25rem' }}>Native Wallet Balance</span>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
                   <span style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em' }}>
                     {balance !== null ? balance : '...'}
@@ -548,7 +775,7 @@ function App() {
 
               {!isAccountActivated && (
                 <div className="alert alert-warning" style={{ marginTop: '1.5rem', padding: '0.75rem', fontSize: '0.85rem', gap: '0.5rem' }}>
-                  <Info size={16} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+                  <Info size={16} style={{ flexShrink: 0, marginTop: '0.15rem' }} />
                   <div>
                     Account not activated on Testnet. Click the Faucet button below to fund and activate it.
                   </div>
@@ -556,11 +783,56 @@ function App() {
               )}
             </div>
 
+            {/* Smart Contract Info Card */}
+            <div className="glass-panel" style={{ padding: '1.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                <Cpu size={18} style={{ color: '#8b5cf6' }} />
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>Soroban Smart Contract</h3>
+              </div>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.875rem' }}>
+                <div>
+                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>Native Token Contract ID</span>
+                  <code style={{ fontSize: '0.8rem', color: '#e2e8f0', wordBreak: 'break-all' }}>{contractId}</code>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div>
+                    <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>Token Symbol</span>
+                    <span style={{ fontWeight: 600, color: '#f8fafc' }}>
+                      {loadingContract ? '...' : contractSymbol || 'N/A'}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>Decimals</span>
+                    <span style={{ fontWeight: 600, color: '#f8fafc' }}>
+                      {loadingContract ? '...' : contractDecimals !== null ? contractDecimals : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>Connected Account Contract Balance</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
+                    <span style={{ fontSize: '1.4rem', fontWeight: 700, color: '#8b5cf6' }}>
+                      {loadingContract ? '...' : contractBalance || '0.0000'}
+                    </span>
+                    <span style={{ fontWeight: 600, color: '#a78bfa' }}>XLM</span>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#64748b' }}>
+                  <Layers size={14} />
+                  <span style={{ fontSize: '0.75rem' }}>RPC: soroban-testnet.stellar.org</span>
+                </div>
+              </div>
+            </div>
+
             {/* Faucet Card */}
             <div className="glass-panel" style={{ padding: '1.75rem' }}>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>Testnet Faucet</h3>
               <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1.25rem 0', lineHeight: '1.5' }}>
-                Need testnet funds? Request 10,000 XLM from Friendbot to run tests and make payments.
+                Need testnet funds? Request 10,000 XLM from Friendbot to activate your account and run test payments.
               </p>
               <button 
                 className="btn btn-secondary" 
@@ -583,68 +855,168 @@ function App() {
             </div>
           </div>
 
-          {/* Middle Column: Send Payment Form */}
+          {/* Middle Column: Payment Forms (Classic vs Soroban Tabs) */}
           <div style={{ gridColumn: 'span 12' }} className="col-lg-7">
-            <div className="glass-panel" style={{ padding: '1.75rem', height: '100%', boxSizing: 'border-box' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Send size={18} style={{ color: '#06b6d4' }} />
-                Send Payment
-              </h3>
-              
-              <form onSubmit={handleSendPayment}>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="recipient">Recipient Stellar Address</label>
-                  <input
-                    id="recipient"
-                    type="text"
-                    className="form-input"
-                    placeholder="G..."
-                    value={recipient}
-                    onChange={(e) => setRecipient(e.target.value.trim())}
-                    required
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="amount">Amount (XLM)</label>
-                    <input
-                      id="amount"
-                      type="number"
-                      step="any"
-                      min="0.0000001"
-                      className="form-input"
-                      placeholder="0.0"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label" htmlFor="memo">Memo (Optional text)</label>
-                    <input
-                      id="memo"
-                      type="text"
-                      maxLength={28}
-                      className="form-input"
-                      placeholder="e.g. Tip Jar"
-                      value={memo}
-                      onChange={(e) => setMemo(e.target.value)}
-                    />
-                  </div>
-                </div>
-
+            <div className="glass-panel" style={{ padding: '1.75rem', minHeight: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
+              {/* Tabs */}
+              <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '1.5rem', gap: '1rem' }}>
                 <button 
-                  type="submit" 
-                  className="btn btn-primary" 
-                  style={{ width: '100%', marginTop: '1rem' }}
-                  disabled={txStatus.type === 'loading' || !recipient || !amount}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: activeTab === 'classic' ? '2px solid #06b6d4' : '2px solid transparent',
+                    color: activeTab === 'classic' ? '#f8fafc' : '#64748b',
+                    padding: '0.75rem 0.5rem',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onClick={() => setActiveTab('classic')}
                 >
-                  <Send size={16} />
-                  Send XLM Transaction
+                  Classic Horizon Payment
                 </button>
-              </form>
+                <button 
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: activeTab === 'soroban' ? '2px solid #8b5cf6' : '2px solid transparent',
+                    color: activeTab === 'soroban' ? '#f8fafc' : '#64748b',
+                    padding: '0.75rem 0.5rem',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  onClick={() => setActiveTab('soroban')}
+                >
+                  Soroban Contract Transfer
+                </button>
+              </div>
+
+              {/* Tab Content 1: Classic Horizon Payment */}
+              {activeTab === 'classic' ? (
+                <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Send size={18} style={{ color: '#06b6d4' }} />
+                    Send Classic Horizon Payment
+                  </h3>
+                  
+                  <form onSubmit={handleSendPayment} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
+                    <div>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="recipient">Recipient Stellar Address</label>
+                        <input
+                          id="recipient"
+                          type="text"
+                          className="form-input"
+                          placeholder="G..."
+                          value={recipient}
+                          onChange={(e) => setRecipient(e.target.value.trim())}
+                          required
+                        />
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="amount">Amount (XLM)</label>
+                          <input
+                            id="amount"
+                            type="number"
+                            step="any"
+                            min="0.0000001"
+                            className="form-input"
+                            placeholder="0.0"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            required
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label className="form-label" htmlFor="memo">Memo (Optional text)</label>
+                          <input
+                            id="memo"
+                            type="text"
+                            maxLength={28}
+                            className="form-input"
+                            placeholder="e.g. Tip Jar"
+                            value={memo}
+                            onChange={(e) => setMemo(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary" 
+                      style={{ width: '100%', marginTop: '1.5rem' }}
+                      disabled={txStatus.type === 'loading' || !recipient || !amount}
+                    >
+                      <Send size={16} />
+                      Send Classic Transaction
+                    </button>
+                  </form>
+                </div>
+              ) : (
+                /* Tab Content 2: Soroban Smart Contract Payment */
+                <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Cpu size={18} style={{ color: '#8b5cf6' }} />
+                    Send Soroban Smart Contract Payment
+                  </h3>
+                  
+                  <form onSubmit={handleContractTransfer} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
+                    <div>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="contractRecipient">Recipient Account / Contract Address</label>
+                        <input
+                          id="contractRecipient"
+                          type="text"
+                          className="form-input"
+                          placeholder="G... or C..."
+                          value={contractRecipient}
+                          onChange={(e) => setContractRecipient(e.target.value.trim())}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="contractAmount">Amount (XLM)</label>
+                        <input
+                          id="contractAmount"
+                          type="number"
+                          step="any"
+                          min="0.0000001"
+                          className="form-input"
+                          placeholder="0.0"
+                          value={contractAmount}
+                          onChange={(e) => setContractAmount(e.target.value)}
+                          required
+                        />
+                      </div>
+
+                      <div className="alert alert-info" style={{ fontSize: '0.8rem', padding: '0.75rem', gap: '0.5rem', margin: '0 0 1rem 0' }}>
+                        <Info size={14} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
+                        <span>
+                          This invokes the <code>transfer</code> method on the SAC contract. The transaction is simulated to estimate resource fees before prompt signing.
+                        </span>
+                      </div>
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      className="btn" 
+                      style={{ width: '100%', marginTop: '1rem', background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)', color: '#ffffff', boxShadow: '0 4px 14px 0 rgba(139, 92, 246, 0.3)' }}
+                      disabled={txStatus.type === 'loading' || !contractRecipient || !contractAmount}
+                    >
+                      <Cpu size={16} />
+                      Invoke Contract Transfer
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
 
@@ -736,7 +1108,7 @@ function App() {
         </main>
       )}
 
-      {/* Grid adjustment media queries in style element for simplicity of single file deployment */}
+      {/* Grid adjustment media queries */}
       <style>{`
         @media (min-width: 992px) {
           main {
