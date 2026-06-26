@@ -134,15 +134,20 @@ function App() {
       const response = await fetch(`${HORIZON_URL}/accounts/${address}/payments?limit=8&order=desc`);
       if (response.ok) {
         const data = await response.json();
-        const payments = data._embedded.records.map((r: any) => ({
-          id: r.id,
-          type: r.type,
-          from: r.from,
-          to: r.to,
-          amount: r.amount || '0',
-          transaction_hash: r.transaction_hash,
-          created_at: r.created_at
-        }));
+        const payments = data._embedded.records.map((r: any) => {
+          const from = r.from || r.funder || r.source_account || '';
+          const to = r.to || r.account || r.into || '';
+          const amount = r.amount || r.starting_balance || '0';
+          return {
+            id: r.id,
+            type: r.type,
+            from,
+            to,
+            amount,
+            transaction_hash: r.transaction_hash,
+            created_at: r.created_at
+          };
+        });
         setHistory(payments);
       }
     } catch (err) {
@@ -370,6 +375,7 @@ function App() {
 
   // Helper: Truncate address
   const truncateAddr = (addr: string) => {
+    if (!addr) return '';
     return `${addr.slice(0, 6)}...${addr.slice(-6)}`;
   };
 
