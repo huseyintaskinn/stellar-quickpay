@@ -76,15 +76,18 @@ The application will start running, and you can open it in your browser at `http
 
 #### 1. Multi-Wallet Adapter Modal
 *Shows the Stellar Wallets Kit modal triggering when clicking "Connect Wallet", listing Freighter, Albedo, and xBull.*
-![Multi-Wallet Kit Modal](https://placehold.co/800x450/0b0f19/f8fafc?text=1.+Multi-Wallet+Kit+Modal)
+
+<img width="490" height="395" alt="image" src="https://github.com/user-attachments/assets/50090909-3816-4ee0-b003-d0335fdb5f5d" />
 
 #### 2. Connected State & Smart Contract Info Card
 *Shows the connected wallet details alongside the Soroban Smart Contract card displaying Token Symbol, Decimals, and Contract Balance.*
-![Connected & Soroban Metadata](https://placehold.co/800x450/0b0f19/f8fafc?text=2.+Soroban+Metadata+Loaded)
+
+<img width="635" height="435" alt="image" src="https://github.com/user-attachments/assets/e2a11e1a-7db8-4678-bac9-e912e6d75d36" />
 
 #### 3. Successful Soroban Transfer & Status Tracking
 *Shows the transaction lifecycle status updating to success and the tx hash link.*
-![Successful Soroban Transfer](https://placehold.co/800x450/0b0f19/f8fafc?text=3.+Successful+Soroban+Transfer)
+
+<img width="1747" height="768" alt="image" src="https://github.com/user-attachments/assets/f4a901ff-17b4-4b22-b410-bf1337a0ff09" />
 
 ---
 
