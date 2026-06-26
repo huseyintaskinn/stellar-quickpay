@@ -61,16 +61,28 @@ The application will start running, and you can open it in your browser at `http
 
 ### 1. Wallet Connected State
 *Shows the dApp dashboard once Freighter is successfully connected.*
-![Wallet Connected](https://placehold.co/800x450/0b0f19/f8fafc?text=1.+Wallet+Connected+State)
+
+
+<img width="640" height="500" alt="image" src="https://github.com/user-attachments/assets/48cbc86d-dc61-49b2-86b4-37e0a15bfb7e" />
+
 
 ### 2. Balance Displayed
 *Shows the wallet address and native XLM balance loaded from the Testnet Horizon server.*
-![Balance Displayed](https://placehold.co/800x450/0b0f19/f8fafc?text=2.+XLM+Balance+Displayed)
+
+
+<img width="640" height="650" alt="image" src="https://github.com/user-attachments/assets/c7e26293-66d2-4626-be01-89681b9d3c5d" />
+
 
 ### 3. Successful Testnet Transaction
 *Shows the transaction success alert with the generated transaction hash.*
-![Successful Transaction](https://placehold.co/800x450/0b0f19/f8fafc?text=3.+Successful+Testnet+Transaction)
+
+
+<img width="1530" height="820" alt="image" src="https://github.com/user-attachments/assets/894f3059-685e-4352-b413-9d77b4934142" />
+
 
 ### 4. Transaction Result & History
 *Shows the updated balance, transaction status, and the payment appearing in the Recent Payments table.*
-![Transaction Result & History](https://placehold.co/800x450/0b0f19/f8fafc?text=4.+Transaction+Result+in+Recent+Payments)
+
+
+<img width="1530" height="380" alt="image" src="https://github.com/user-attachments/assets/5a778cc1-8976-44c0-94a0-7dd63ba08849" />
+
