@@ -70,19 +70,43 @@ The application will start running, and you can open it in your browser at `http
 
 ---
 
-## 📸 Screenshots (Submission Proofs)
+### Level 2 - Screenshots (Yellow Belt Proofs)
 
 *Note: Replace these placeholders with your actual screenshots for submission.*
 
-### 1. Multi-Wallet Adapter Modal
+#### 1. Multi-Wallet Adapter Modal
 *Shows the Stellar Wallets Kit modal triggering when clicking "Connect Wallet", listing Freighter, Albedo, and xBull.*
 ![Multi-Wallet Kit Modal](https://placehold.co/800x450/0b0f19/f8fafc?text=1.+Multi-Wallet+Kit+Modal)
 
-### 2. Connected State & Smart Contract Info Card
+#### 2. Connected State & Smart Contract Info Card
 *Shows the connected wallet details alongside the Soroban Smart Contract card displaying Token Symbol, Decimals, and Contract Balance.*
 ![Connected & Soroban Metadata](https://placehold.co/800x450/0b0f19/f8fafc?text=2.+Soroban+Metadata+Loaded)
 
-### 3. Successful Soroban Transfer & Status Tracking
+#### 3. Successful Soroban Transfer & Status Tracking
 *Shows the transaction lifecycle status updating to success and the tx hash link.*
 ![Successful Soroban Transfer](https://placehold.co/800x450/0b0f19/f8fafc?text=3.+Successful+Soroban+Transfer)
+
+---
+
+### Level 1 - Screenshots (White Belt Proofs)
+
+#### 1. Wallet Connected State
+*Shows the dApp dashboard once Freighter is successfully connected.*
+
+<img width="640" height="500" alt="image" src="https://github.com/user-attachments/assets/48cbc86d-dc61-49b2-86b4-37e0a15bfb7e" />
+
+#### 2. Balance Displayed
+*Shows the wallet address and native XLM balance loaded from the Testnet Horizon server.*
+
+<img width="640" height="650" alt="image" src="https://github.com/user-attachments/assets/c7e26293-66d2-4626-be01-89681b9d3c5d" />
+
+#### 3. Successful Testnet Transaction
+*Shows the transaction success alert with the generated transaction hash.*
+
+<img width="1530" height="820" alt="image" src="https://github.com/user-attachments/assets/894f3059-685e-4352-b413-9d77b4934142" />
+
+#### 4. Transaction Result & History
+*Shows the updated balance, transaction status, and the payment appearing in the Recent Payments table.*
+
+<img width="1530" height="380" alt="image" src="https://github.com/user-attachments/assets/5a778cc1-8976-44c0-94a0-7dd63ba08849" />
 
