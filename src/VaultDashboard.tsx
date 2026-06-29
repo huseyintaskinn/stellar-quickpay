@@ -20,7 +20,7 @@ interface VaultDashboardProps {
 }
 
 export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, rpcServer, server, onSuccess }) => {
-  const VAULT_CONTRACT_ID = 'YOUR_VAULT_CONTRACT_ID'; // Will be replaced by CI/CD or User
+  const VAULT_CONTRACT_ID = 'CCPOQABR5MGO3NPRJCI75EYTW43JCKUUSR4DJLIZLWKLJFVUZY5K5GV2'; // Will be replaced by CI/CD or User
   const NATIVE_ASSET_CONTRACT_ID = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 
   const [depositAmount, setDepositAmount] = useState('');
