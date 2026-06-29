@@ -15,7 +15,6 @@ import {
   rpc,
   Address,
   scValToNative,
-  nativeToScVal,
   Account,
   Memo
 } from '@stellar/stellar-sdk';
@@ -35,6 +34,7 @@ import {
   Cpu,
   Layers
 } from 'lucide-react';
+import { VaultDashboard } from './VaultDashboard';
 
 interface PaymentTx {
   id: string;
@@ -63,10 +63,6 @@ function App() {
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [memo, setMemo] = useState('');
-
-  // Form State - Soroban
-  const [contractRecipient, setContractRecipient] = useState('');
-  const [contractAmount, setContractAmount] = useState('');
 
   // Soroban Contract State
   const contractId = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
@@ -319,8 +315,6 @@ function App() {
     setRecipient('');
     setAmount('');
     setMemo('');
-    setContractRecipient('');
-    setContractAmount('');
   };
 
   // Fund Wallet with Friendbot Faucet
@@ -462,144 +456,6 @@ function App() {
       setTxStatus({
         type: 'error',
         message: errorMsg
-      });
-    }
-  };
-
-  // Soroban smart contract payment flow
-  const handleContractTransfer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!walletAddress || !contractRecipient || !contractAmount) return;
-
-    setTxStatus({ type: 'loading', message: 'Preparing Soroban transaction simulation...' });
-
-    try {
-      // 1. Input validations (Error Type 1)
-      if (!contractRecipient.startsWith('G') || contractRecipient.length !== 56) {
-        throw new Error('Invalid recipient address format. It must be a 56-character public key starting with G.');
-      }
-
-      const parsedAmount = parseFloat(contractAmount);
-      if (isNaN(parsedAmount) || parsedAmount <= 0) {
-        throw new Error('Please enter a valid amount greater than 0.');
-      }
-
-      // 2. Insufficient balance checks (Error Type 2)
-      if (contractBalance) {
-        const currentBalanceVal = parseFloat(contractBalance);
-        if (parsedAmount > currentBalanceVal) {
-          throw new Error(`Insufficient funds on contract. You are trying to transfer ${contractAmount} XLM but only have ${contractBalance} XLM.`);
-        }
-      }
-
-      const decimalsVal = contractDecimals || 7;
-      const rawAmount = BigInt(Math.floor(parsedAmount * Math.pow(10, decimalsVal)));
-
-      // 3. Load account sequence number from Horizon
-      setTxStatus({ type: 'loading', message: 'Fetching sender account details...' });
-      let sourceAccount;
-      try {
-        sourceAccount = await server.loadAccount(walletAddress);
-      } catch (err) {
-        throw new Error('Account is not active yet on Testnet. Please fund it using the Faucet first.');
-      }
-
-      // 4. Build the initial transaction containing invokeContractFunction
-      setTxStatus({ type: 'loading', message: 'Building Soroban transaction...' });
-      
-      const invokeOp = Operation.invokeContractFunction({
-        contract: contractId,
-        function: 'transfer',
-        args: [
-          new Address(walletAddress).toScVal(),
-          new Address(contractRecipient).toScVal(),
-          nativeToScVal(rawAmount, { type: 'i128' })
-        ]
-      });
-
-      const transaction = new TransactionBuilder(sourceAccount, {
-        fee: '100', // Base fee to pass validation, simulation overrides it
-        networkPassphrase: Networks.TESTNET
-      })
-        .addOperation(invokeOp)
-        .setTimeout(60)
-        .build();
-
-      // 5. Simulate the transaction using Soroban RPC to fetch footprints & resource fee
-      setTxStatus({ type: 'loading', message: 'Simulating transaction resources on Soroban RPC...' });
-      const simResult = await rpcServer.simulateTransaction(transaction) as any;
-
-      if (simResult.error) {
-        throw new Error(`Simulation failed: ${simResult.error}`);
-      }
-
-      if (rpc.Api.isSimulationSuccess(simResult)) {
-        // Assemble transaction merges footprints & resource fee
-        setTxStatus({ type: 'loading', message: 'Assembling Soroban transaction envelope...' });
-        const assembledTx = rpc.assembleTransaction(transaction, simResult) as any;
-        
-        // If assembleTransaction returns a Builder, we need to build it first.
-        const xdr = typeof assembledTx.build === 'function' ? assembledTx.build().toXDR() : assembledTx.toXDR();
-
-        // 6. Sign the transaction using Stellar Wallets Kit (Error Type 3)
-        setTxStatus({ type: 'loading', message: 'Awaiting signature in connected wallet...' });
-        const { signedTxXdr } = await StellarWalletsKit.signTransaction(xdr, {
-          networkPassphrase: Networks.TESTNET,
-          address: walletAddress
-        });
-
-        if (!signedTxXdr) {
-          throw new Error('Signing request rejected. Transaction was not signed.');
-        }
-
-        // Parse signed transaction back
-        const signedTx = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
-
-        // 7. Submit to Soroban RPC
-        setTxStatus({ type: 'loading', message: 'Submitting transaction to Soroban network...' });
-        const response = await rpcServer.sendTransaction(signedTx);
-        
-        if (response.status === 'ERROR') {
-          const resErr = (response as any).errorResult || (response as any).errorResultXdr;
-          throw new Error(`Transaction submission error: ${resErr || 'Unknown Soroban error'}`);
-        }
-
-        setTxStatus({ type: 'loading', message: 'Waiting for transaction consensus...' });
-        
-        // Poll for transaction status until complete
-        let statusResponse = await rpcServer.getTransaction(response.hash);
-        let attempts = 0;
-        while (statusResponse.status === 'NOT_FOUND' || statusResponse.status === 'SUCCESS' && !statusResponse.resultMetaXdr) {
-          await new Promise(r => setTimeout(r, 2000));
-          statusResponse = await rpcServer.getTransaction(response.hash);
-          attempts++;
-          if (attempts > 15) break;
-        }
-
-        if (statusResponse.status === 'SUCCESS') {
-          setTxStatus({
-            type: 'success',
-            message: `Successfully transferred ${contractAmount} XLM via Soroban Smart Contract!`,
-            hash: response.hash
-          });
-          
-          setContractRecipient('');
-          setContractAmount('');
-
-          await loadAllData(walletAddress);
-        } else {
-          throw new Error(`Transaction execution failed: ${statusResponse.status}`);
-        }
-
-      } else {
-        throw new Error('Simulation failed. Could not retrieve footprints.');
-      }
-
-    } catch (err: any) {
-      console.error('Soroban payment failed:', err);
-      setTxStatus({
-        type: 'error',
-        message: err.message || err.toString()
       });
     }
   };
@@ -960,61 +816,19 @@ function App() {
                   </form>
                 </div>
               ) : (
-                /* Tab Content 2: Soroban Smart Contract Payment */
+                /* Tab Content 2: Soroban Smart Contract Vault */
                 <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Cpu size={18} style={{ color: '#8b5cf6' }} />
-                    Send Soroban Smart Contract Payment
+                    Advanced Vault Dashboard
                   </h3>
                   
-                  <form onSubmit={handleContractTransfer} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
-                    <div>
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="contractRecipient">Recipient Account / Contract Address</label>
-                        <input
-                          id="contractRecipient"
-                          type="text"
-                          className="form-input"
-                          placeholder="G... or C..."
-                          value={contractRecipient}
-                          onChange={(e) => setContractRecipient(e.target.value.trim())}
-                          required
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="contractAmount">Amount (XLM)</label>
-                        <input
-                          id="contractAmount"
-                          type="number"
-                          step="any"
-                          min="0.0000001"
-                          className="form-input"
-                          placeholder="0.0"
-                          value={contractAmount}
-                          onChange={(e) => setContractAmount(e.target.value)}
-                          required
-                        />
-                      </div>
-
-                      <div className="alert alert-info" style={{ fontSize: '0.8rem', padding: '0.75rem', gap: '0.5rem', margin: '0 0 1rem 0' }}>
-                        <Info size={14} style={{ flexShrink: 0, marginTop: '0.1rem' }} />
-                        <span>
-                          This invokes the <code>transfer</code> method on the SAC contract. The transaction is simulated to estimate resource fees before prompt signing.
-                        </span>
-                      </div>
-                    </div>
-
-                    <button 
-                      type="submit" 
-                      className="btn" 
-                      style={{ width: '100%', marginTop: '1rem', background: 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)', color: '#ffffff', boxShadow: '0 4px 14px 0 rgba(139, 92, 246, 0.3)' }}
-                      disabled={txStatus.type === 'loading' || !contractRecipient || !contractAmount}
-                    >
-                      <Cpu size={16} />
-                      Invoke Contract Transfer
-                    </button>
-                  </form>
+                  <VaultDashboard 
+                    walletAddress={walletAddress} 
+                    rpcServer={rpcServer} 
+                    server={server}
+                    onSuccess={() => loadAllData(walletAddress)}
+                  />
                 </div>
               )}
             </div>

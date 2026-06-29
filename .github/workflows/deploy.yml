@@ -1,0 +1,97 @@
+name: CI/CD Pipeline - Stellar Orange Belt
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install Dependencies
+        run: npm install
+      - name: Run Tests
+        run: npm run test
+
+  contract-build-and-deploy:
+    name: Smart Contract Build & Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Install Stellar CLI
+        run: cargo install --locked stellar-cli --features opt
+
+      - name: Run Smart Contract Tests
+        working-directory: ./contracts/vault
+        run: cargo test
+
+      - name: Build Smart Contract
+        working-directory: ./contracts/vault
+        run: stellar contract build
+
+      - name: Deploy Contract to Testnet
+        run: |
+          # Configure network
+          stellar network add testnet \
+            --rpc-url https://soroban-testnet.stellar.org \
+            --network-passphrase "Test SDF Network ; September 2015"
+          
+          # Generate and fund a temporary testnet identity
+          stellar keys generate deployer --network testnet
+          
+          # Deploy the contract
+          stellar contract deploy \
+            --wasm contracts/vault/target/wasm32-unknown-unknown/release/soroban_vault_contract.wasm \
+            --source deployer \
+            --network testnet > deployed_contract_id.txt
+          
+          echo "Deployed Contract ID:"
+          cat deployed_contract_id.txt
+          
+      - name: Upload Contract ID Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-id
+          path: deployed_contract_id.txt
+
+  deploy-frontend:
+    name: Deploy to GitHub Pages
+    needs: [frontend-test, contract-build-and-deploy]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install Dependencies
+        run: npm install
+      - name: Build App
+        run: npm run build
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
