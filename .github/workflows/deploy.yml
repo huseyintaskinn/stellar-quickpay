@@ -54,7 +54,20 @@ jobs:
           
           # Generate and fund a temporary testnet identity
           stellar keys generate deployer --network testnet
-          curl -s "https://friendbot.stellar.org?addr=$(stellar keys address deployer)"
+          PUBKEY=$(stellar keys address deployer)
+          curl -s "https://friendbot.stellar.org?addr=$PUBKEY"
+          
+          # Wait for account to be active on Horizon
+          echo "Waiting for account $PUBKEY to be active on testnet..."
+          for i in {1..15}; do
+            if curl -s "https://horizon-testnet.stellar.org/accounts/$PUBKEY" | grep -q "id"; then
+              echo "Account is active on Horizon!"
+              break
+            fi
+            echo "Still waiting ($i)..."
+            sleep 2
+          done
+          sleep 5
           
           # Find the compiled WASM file dynamically
           WASM_FILE=$(find contracts/vault/target -name "soroban_vault_contract.wasm" | grep release | head -n 1)
