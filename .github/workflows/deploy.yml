@@ -49,7 +49,7 @@ jobs:
         run: |
           # Configure network
           stellar network add testnet \
-            --rpc-url https://soroban-testnet.stellar.org \
+            --rpc-url https://soroban-rpc.testnet.stellar.gateway.fm \
             --network-passphrase "Test SDF Network ; September 2015"
           
           # Generate and fund a temporary testnet identity
