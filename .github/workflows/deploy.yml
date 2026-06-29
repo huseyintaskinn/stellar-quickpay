@@ -67,7 +67,7 @@ jobs:
             echo "Still waiting ($i)..."
             sleep 2
           done
-          sleep 5
+          sleep 25
           
           # Find the compiled WASM file dynamically
           WASM_FILE=$(find contracts/vault/target -name "soroban_vault_contract.wasm" | grep release | head -n 1)
