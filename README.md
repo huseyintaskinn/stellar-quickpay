@@ -33,24 +33,32 @@ The frontend features a dedicated **Vault Dashboard** component that:
 
 | Requirement | Value / Link |
 | :--- | :--- |
-| **Live Demo Link** | `https://huseyintaskinn.github.io/stellar-quickpay/` |
-| **Soroban Vault Contract ID** | `[PASTE_YOUR_DOWNLOADED_CONTRACT_ID_HERE]` |
-| **Transaction Hash** | `[PASTE_YOUR_DEPOSIT_OR_WITHDRAW_TX_HASH_HERE]` |
-| **Demo Video Link (1-2 mins)** | `[PASTE_YOUR_YOUTUBE_OR_LOOM_LINK_HERE]` |
+| **Live Demo Link** | `https://huseyintaskin.com.tr/stellar-quickpay/` |
+| **Soroban Vault Contract ID** | `CCPOQABR5MGO3NPRJCI75EYTW43JCKUUSR4DJLIZLWKLJFVUZY5K5GV2` |
+| **Transaction Hash** | `https://stellar.expert/explorer/testnet/tx/fb59578ca826ccbb4a6ff667aa3e2b80aeba380c581845a2c93e269146c11aaa` |
+| **Demo Video Link (1-2 mins)** | `https://drive.google.com/file/d/1KtvdFwVSZI63OGwcmBluFc0tXDRCMn_3/view?usp=sharing` |
 
 ### 📸 Level 3 Proof Screenshots
 
 #### 1. CI/CD Pipeline Running (GitHub Actions)
 *Screenshot showing a fully successful run of the `deploy.yml` workflow, including contract tests, building, deploying, and Pages deployment.*
-`[INSERT_CI_CD_SCREENSHOT_HERE]`
+
+<img width="813" height="292" alt="image" src="https://github.com/user-attachments/assets/24eb6ed4-e402-4f43-a18e-0e08b7ff05d6" />
 
 #### 2. Test Output with 3+ Passing Tests (Frontend / Contract)
 *Screenshot showing the test suite results (from GitHub Actions run logs or local console).*
-`[INSERT_TESTS_SCREENSHOT_HERE]`
+
+<img width="1373" height="690" alt="image" src="https://github.com/user-attachments/assets/248332a7-4840-4352-9668-5a720123ef33" />
+
 
 #### 3. Mobile Responsive UI
 *Screenshot showing the Vault Dashboard running on a mobile screen size.*
-`[INSERT_MOBILE_SCREENSHOT_HERE]`
+
+<img width="435" height="967" alt="image" src="https://github.com/user-attachments/assets/7f51245f-a047-457f-91ee-ded7c11ba50c" />
+
+
+<img width="437" height="966" alt="image" src="https://github.com/user-attachments/assets/a063df76-64dc-44d2-8a9a-29291b6c375c" />
+
 
 ---
 
