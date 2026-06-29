@@ -34,7 +34,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
 
   // Load vault balance
   const fetchVaultBalance = async () => {
-    if (VAULT_CONTRACT_ID === 'YOUR_VAULT_CONTRACT_ID') return;
+    if (VAULT_CONTRACT_ID === 'CCPOQABR5MGO3NPRJCI75EYTW43JCKUUSR4DJLIZLWKLJFVUZY5K5GV2') return;
     try {
       const invokeOp = Operation.invokeContractFunction({
         contract: VAULT_CONTRACT_ID,
@@ -64,7 +64,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
 
   // Poll for Events
   const pollEvents = async () => {
-    if (VAULT_CONTRACT_ID === 'YOUR_VAULT_CONTRACT_ID') return;
+    if (VAULT_CONTRACT_ID === 'CCPOQABR5MGO3NPRJCI75EYTW43JCKUUSR4DJLIZLWKLJFVUZY5K5GV2') return;
     try {
       const networkInfo = await rpcServer.getLatestLedger();
       const startLedger = Math.max(networkInfo.sequence - 100, 1); // Get last 100 ledgers
@@ -125,7 +125,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
   }, [walletAddress]);
 
   const executeVaultCall = async (method: 'deposit' | 'withdraw', amountStr: string) => {
-    if (VAULT_CONTRACT_ID === 'YOUR_VAULT_CONTRACT_ID') {
+    if (VAULT_CONTRACT_ID === 'CCPOQABR5MGO3NPRJCI75EYTW43JCKUUSR4DJLIZLWKLJFVUZY5K5GV2') {
         setTxStatus({ type: 'error', message: 'Please update YOUR_VAULT_CONTRACT_ID in the code after CI/CD deployment!' });
         return;
     }
