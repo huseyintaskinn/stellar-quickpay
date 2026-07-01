@@ -7,7 +7,6 @@ import {
   Address,
   nativeToScVal,
   xdr,
-  Account,
 } from '@stellar/stellar-sdk';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
 import { FileText, CheckCircle2, XCircle, RefreshCw, Copy } from 'lucide-react';

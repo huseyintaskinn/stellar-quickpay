@@ -7,7 +7,6 @@ import {
   Address,
   nativeToScVal,
   scValToNative,
-  xdr,
 } from '@stellar/stellar-sdk';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
 import { Search, CreditCard, RefreshCw, CheckCircle2, XCircle, Clock, Ban } from 'lucide-react';
@@ -26,7 +25,6 @@ interface InvoicePaymentProps {
   rpcServer: rpc.Server;
   server: any;
   escrowContractId: string;
-  nativeAssetContractId: string;
 }
 
 const STATUS_CONFIG = {
@@ -37,7 +35,7 @@ const STATUS_CONFIG = {
 };
 
 export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
-  walletAddress, rpcServer, server, escrowContractId, nativeAssetContractId
+  walletAddress, rpcServer, server, escrowContractId
 }) => {
   const [invoiceId, setInvoiceId] = useState('');
   const [invoice, setInvoice] = useState<Invoice | null>(null);
