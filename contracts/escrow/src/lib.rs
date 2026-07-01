@@ -6,7 +6,7 @@ use soroban_sdk::{
 // ─── Data Structures ───────────────────────────────────────────────────────
 
 #[contracttype]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum InvoiceStatus {
     Pending,   // Created, awaiting payment
     Funded,    // Client has paid, funds locked in escrow

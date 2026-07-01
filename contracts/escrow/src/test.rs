@@ -3,8 +3,8 @@
 use crate::{EscrowContract, EscrowContractClient, InvoiceStatus};
 use soroban_sdk::{testutils::Address as _, token, Address, Env, String};
 
-fn create_test_token(env: &Env, admin: &Address) -> (Address, token::Client, token::StellarAssetClient) {
-    let contract_id = env.register_stellar_asset_contract(admin.clone());
+fn create_test_token<'a>(env: &'a Env, admin: &Address) -> (Address, token::Client<'a>, token::StellarAssetClient<'a>) {
+    let contract_id = env.register_stellar_asset_contract_v2(admin.clone()).address();
     let client = token::Client::new(env, &contract_id);
     let admin_client = token::StellarAssetClient::new(env, &contract_id);
     (contract_id, client, admin_client)
@@ -16,7 +16,7 @@ fn test_full_invoice_lifecycle() {
     env.mock_all_auths();
 
     // Setup
-    let contract_id = env.register_contract(None, EscrowContract);
+    let contract_id = env.register(EscrowContract, ());
     let client = EscrowContractClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
@@ -63,7 +63,7 @@ fn test_cancel_pending_invoice() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, EscrowContract);
+    let contract_id = env.register(EscrowContract, ());
     let client = EscrowContractClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
@@ -90,7 +90,7 @@ fn test_freelancer_invoices_list() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register_contract(None, EscrowContract);
+    let contract_id = env.register(EscrowContract, ());
     let client = EscrowContractClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
