@@ -51,7 +51,7 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
           new Address(clientAddress).toScVal(),
           new Address(nativeAssetContractId).toScVal(),
           nativeToScVal(rawAmount, { type: 'i128' }),
-          xdr.ScVal.scvString(description),
+          nativeToScVal(description, { type: 'string' }),
         ],
       });
 
