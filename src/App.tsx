@@ -63,7 +63,7 @@ function App() {
   const [isFunding, setIsFunding] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'classic' | 'soroban' | 'create-invoice' | 'pay-invoice'>('create-invoice');
+  const [activeTab, setActiveTab] = useState<'classic' | 'soroban' | 'create-invoice' | 'pay-invoice' | 'dashboard'>('create-invoice');
 
   // StellarPay Escrow Contract
   const ESCROW_CONTRACT_ID = 'YOUR_ESCROW_CONTRACT_ID'; // Replace after CI/CD deploy
