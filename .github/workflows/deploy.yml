@@ -59,9 +59,9 @@ jobs:
 
       - name: Deploy Contracts to Testnet
         run: |
-          # Configure network
+          # Configure network using official SDF RPC
           stellar network add testnet \
-            --rpc-url https://soroban-rpc.testnet.stellar.gateway.fm \
+            --rpc-url https://soroban-testnet.stellar.org \
             --network-passphrase "Test SDF Network ; September 2015"
           
           # Generate and fund a temporary testnet identity
@@ -81,23 +81,35 @@ jobs:
           done
           sleep 25
 
-          # Deploy Vault Contract
+          # Deploy Vault Contract with retry logic
           VAULT_WASM=$(find contracts/vault/target -name "soroban_vault_contract.wasm" | grep release | head -n 1)
           echo "Deploying Vault: $VAULT_WASM"
-          stellar contract deploy \
-            --wasm $VAULT_WASM \
-            --source deployer \
-            --network testnet > vault_contract_id.txt
-          echo "Vault Contract ID: $(cat vault_contract_id.txt)"
+          for i in {1..5}; do
+            if stellar contract deploy \
+              --wasm $VAULT_WASM \
+              --source deployer \
+              --network testnet > vault_contract_id.txt; then
+              echo "Vault Contract ID: $(cat vault_contract_id.txt)"
+              break
+            fi
+            echo "Vault deployment failed. Retrying ($i/5)..."
+            sleep 10
+          done
 
-          # Deploy Escrow Contract
+          # Deploy Escrow Contract with retry logic
           ESCROW_WASM=$(find contracts/escrow/target -name "soroban_escrow_contract.wasm" | grep release | head -n 1)
           echo "Deploying Escrow: $ESCROW_WASM"
-          stellar contract deploy \
-            --wasm $ESCROW_WASM \
-            --source deployer \
-            --network testnet > escrow_contract_id.txt
-          echo "Escrow Contract ID: $(cat escrow_contract_id.txt)"
+          for i in {1..5}; do
+            if stellar contract deploy \
+              --wasm $ESCROW_WASM \
+              --source deployer \
+              --network testnet > escrow_contract_id.txt; then
+              echo "Escrow Contract ID: $(cat escrow_contract_id.txt)"
+              break
+            fi
+            echo "Escrow deployment failed. Retrying ($i/5)..."
+            sleep 10
+          done
           
       - name: Upload Contract IDs Artifact
         uses: actions/upload-artifact@v4
