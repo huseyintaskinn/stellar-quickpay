@@ -32,9 +32,15 @@ import {
   Info,
   LogOut,
   Cpu,
-  Layers
+  Layers,
+  FileText,
+  CreditCard,
+  LayoutDashboard
 } from 'lucide-react';
 import { VaultDashboard } from './VaultDashboard';
+import { InvoiceCreator } from './components/InvoiceCreator';
+import { InvoicePayment } from './components/InvoicePayment';
+import { FreelancerDashboard } from './components/FreelancerDashboard';
 
 interface PaymentTx {
   id: string;
@@ -57,7 +63,12 @@ function App() {
   const [isFunding, setIsFunding] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'classic' | 'soroban'>('classic');
+  const [activeTab, setActiveTab] = useState<'classic' | 'soroban' | 'create-invoice' | 'pay-invoice'>('create-invoice');
+
+  // StellarPay Escrow Contract
+  const ESCROW_CONTRACT_ID = 'YOUR_ESCROW_CONTRACT_ID'; // Replace after CI/CD deploy
+  const NATIVE_ASSET_CONTRACT_ID = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Form State - Classic
   const [recipient, setRecipient] = useState('');
@@ -715,117 +726,108 @@ function App() {
           <div style={{ gridColumn: 'span 12' }} className="col-lg-7">
             <div className="glass-panel" style={{ padding: '1.75rem', minHeight: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
               {/* Tabs */}
-              <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '1.5rem', gap: '1rem' }}>
-                <button 
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    borderBottom: activeTab === 'classic' ? '2px solid #06b6d4' : '2px solid transparent',
-                    color: activeTab === 'classic' ? '#f8fafc' : '#64748b',
-                    padding: '0.75rem 0.5rem',
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onClick={() => setActiveTab('classic')}
-                >
-                  Classic Horizon Payment
-                </button>
-                <button 
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    borderBottom: activeTab === 'soroban' ? '2px solid #8b5cf6' : '2px solid transparent',
-                    color: activeTab === 'soroban' ? '#f8fafc' : '#64748b',
-                    padding: '0.75rem 0.5rem',
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                  onClick={() => setActiveTab('soroban')}
-                >
-                  Soroban Contract Transfer
-                </button>
+              <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '1.5rem', gap: '0.25rem', overflowX: 'auto' }}>
+                {[
+                  { key: 'create-invoice', label: 'Create Invoice', icon: FileText, color: '#10b981' },
+                  { key: 'pay-invoice',    label: 'Pay Invoice',    icon: CreditCard, color: '#8b5cf6' },
+                  { key: 'dashboard',     label: 'My Invoices',    icon: LayoutDashboard, color: '#06b6d4' },
+                  { key: 'classic',       label: 'Send XLM',       icon: Send, color: '#06b6d4' },
+                  { key: 'soroban',       label: 'Vault',          icon: Cpu, color: '#8b5cf6' },
+                ].map(({ key, label, icon: Icon, color }) => (
+                  <button
+                    key={key}
+                    style={{
+                      background: 'none', border: 'none', whiteSpace: 'nowrap',
+                      borderBottom: activeTab === key ? `2px solid ${color}` : '2px solid transparent',
+                      color: activeTab === key ? '#f8fafc' : '#64748b',
+                      padding: '0.6rem 0.75rem', fontSize: '0.85rem', fontWeight: 600,
+                      cursor: 'pointer', transition: 'all 0.2s',
+                      display: 'flex', alignItems: 'center', gap: '0.35rem'
+                    }}
+                    onClick={() => setActiveTab(key as any)}
+                  >
+                    <Icon size={14} /> {label}
+                  </button>
+                ))}
               </div>
 
-              {/* Tab Content 1: Classic Horizon Payment */}
-              {activeTab === 'classic' ? (
+              {/* Tab: Create Invoice */}
+              {activeTab === 'create-invoice' && (
+                <InvoiceCreator
+                  walletAddress={walletAddress!}
+                  rpcServer={rpcServer}
+                  server={server}
+                  escrowContractId={ESCROW_CONTRACT_ID}
+                  nativeAssetContractId={NATIVE_ASSET_CONTRACT_ID}
+                  onInvoiceCreated={() => setRefreshTrigger(t => t + 1)}
+                />
+              )}
+
+              {/* Tab: Pay Invoice */}
+              {activeTab === 'pay-invoice' && (
+                <InvoicePayment
+                  walletAddress={walletAddress!}
+                  rpcServer={rpcServer}
+                  server={server}
+                  escrowContractId={ESCROW_CONTRACT_ID}
+                />
+              )}
+
+              {/* Tab: My Invoices Dashboard */}
+              {activeTab === 'dashboard' && (
+                <FreelancerDashboard
+                  walletAddress={walletAddress!}
+                  rpcServer={rpcServer}
+                  escrowContractId={ESCROW_CONTRACT_ID}
+                  refreshTrigger={refreshTrigger}
+                />
+              )}
+
+              {/* Tab: Classic Horizon Payment */}
+              {activeTab === 'classic' && (
                 <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Send size={18} style={{ color: '#06b6d4' }} />
                     Send Classic Horizon Payment
                   </h3>
-                  
                   <form onSubmit={handleSendPayment} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
                     <div>
                       <div className="form-group">
                         <label className="form-label" htmlFor="recipient">Recipient Stellar Address</label>
-                        <input
-                          id="recipient"
-                          type="text"
-                          className="form-input"
-                          placeholder="G..."
-                          value={recipient}
-                          onChange={(e) => setRecipient(e.target.value.trim())}
-                          required
-                        />
+                        <input id="recipient" type="text" className="form-input" placeholder="G..."
+                          value={recipient} onChange={(e) => setRecipient(e.target.value.trim())} required />
                       </div>
-
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div className="form-group">
                           <label className="form-label" htmlFor="amount">Amount (XLM)</label>
-                          <input
-                            id="amount"
-                            type="number"
-                            step="any"
-                            min="0.0000001"
-                            className="form-input"
-                            placeholder="0.0"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            required
-                          />
+                          <input id="amount" type="number" step="any" min="0.0000001" className="form-input" placeholder="0.0"
+                            value={amount} onChange={(e) => setAmount(e.target.value)} required />
                         </div>
-
                         <div className="form-group">
-                          <label className="form-label" htmlFor="memo">Memo (Optional text)</label>
-                          <input
-                            id="memo"
-                            type="text"
-                            maxLength={28}
-                            className="form-input"
-                            placeholder="e.g. Tip Jar"
-                            value={memo}
-                            onChange={(e) => setMemo(e.target.value)}
-                          />
+                          <label className="form-label" htmlFor="memo">Memo (Optional)</label>
+                          <input id="memo" type="text" maxLength={28} className="form-input" placeholder="e.g. Invoice #42"
+                            value={memo} onChange={(e) => setMemo(e.target.value)} />
                         </div>
                       </div>
                     </div>
-
-                    <button 
-                      type="submit" 
-                      className="btn btn-primary" 
-                      style={{ width: '100%', marginTop: '1.5rem' }}
-                      disabled={txStatus.type === 'loading' || !recipient || !amount}
-                    >
-                      <Send size={16} />
-                      Send Classic Transaction
+                    <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1.5rem' }}
+                      disabled={txStatus.type === 'loading' || !recipient || !amount}>
+                      <Send size={16} /> Send Classic Transaction
                     </button>
                   </form>
                 </div>
-              ) : (
-                /* Tab Content 2: Soroban Smart Contract Vault */
+              )}
+
+              {/* Tab: Soroban Vault */}
+              {activeTab === 'soroban' && (
                 <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                   <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Cpu size={18} style={{ color: '#8b5cf6' }} />
                     Advanced Vault Dashboard
                   </h3>
-                  
-                  <VaultDashboard 
-                    walletAddress={walletAddress} 
-                    rpcServer={rpcServer} 
+                  <VaultDashboard
+                    walletAddress={walletAddress}
+                    rpcServer={rpcServer}
                     server={server}
                     onSuccess={() => loadAllData(walletAddress)}
                   />
