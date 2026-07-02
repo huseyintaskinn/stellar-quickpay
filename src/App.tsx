@@ -66,7 +66,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<'classic' | 'soroban' | 'create-invoice' | 'pay-invoice' | 'dashboard'>('create-invoice');
 
   // StellarPay Escrow Contract
-  const ESCROW_CONTRACT_ID = 'CCXFL7QR4WTBFWQDHF2QVDRVU3I3MKUYWZIN4PPREJWMGVVEVYNDCYRP';
+  const ESCROW_CONTRACT_ID = 'CDREZXFNVSVQZLFJG4U3XBPA2CVYH2GJNK3MADHJFNHZTXETLEAFF5SK';
   const NATIVE_ASSET_CONTRACT_ID = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
