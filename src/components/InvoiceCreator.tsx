@@ -6,7 +6,7 @@ import {
   rpc,
   Address,
   nativeToScVal,
-  xdr,
+  scValToNative,
 } from '@stellar/stellar-sdk';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
 import { FileText, CheckCircle2, XCircle, RefreshCw, Copy } from 'lucide-react';
@@ -90,18 +90,14 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
       }
 
       if (statusResponse.status === 'SUCCESS') {
-        // Try to extract invoice ID from return value
+        // Extract invoice ID from the contract's return value (u64)
         let invoiceId = '?';
         try {
-          const meta = (statusResponse as any).resultMetaXdr;
-          if (meta) {
-            const parsed = xdr.TransactionMeta.fromXDR(meta, 'base64');
-            const returnVal = (parsed as any).v3?.sorobanMeta()?.returnValue();
-            if (returnVal) {
-              invoiceId = returnVal.u64().toString();
-            }
+          const successRes = statusResponse as rpc.Api.GetSuccessfulTransactionResponse;
+          if (successRes.returnValue) {
+            invoiceId = scValToNative(successRes.returnValue).toString();
           }
-        } catch { /* fallback */ }
+        } catch { /* fallback to ? */ }
 
         setStatus({
           type: 'success',
