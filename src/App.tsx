@@ -244,21 +244,22 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         const payments = data._embedded.records
-          .filter((r: any) => {
-            const amount = parseFloat(r.amount || r.starting_balance || '0');
-            const from = r.from || r.funder || r.source_account || '';
-            const to = r.to || r.account || r.into || '';
-            return amount > 0 && from !== '' && to !== '';
-          })
           .map((r: any) => {
             const from = r.from || r.funder || r.source_account || '';
             const to = r.to || r.account || r.into || '';
-            const amount = r.amount || r.starting_balance || '0';
+            let amount = r.amount || r.starting_balance || '0';
+            let type = r.type;
+
+            if (r.type === 'invoke_host_function') {
+              type = 'Contract Call';
+              amount = 'Soroban Tx';
+            }
+
             return {
               id: r.id,
-              type: r.type,
-              from,
-              to,
+              type,
+              from: from || r.source_account || '',
+              to: to || 'StellarPay Contract',
               amount,
               transaction_hash: r.transaction_hash,
               created_at: r.created_at
@@ -876,30 +877,45 @@ function App() {
                         return (
                           <tr key={tx.id}>
                             <td>
-                              <span 
-                                className="badge" 
-                                style={{
-                                  background: isSent ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
-                                  color: isSent ? '#f87171' : '#34d399',
-                                  border: `1px solid ${isSent ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)'}`,
-                                  gap: '0.25rem'
-                                }}
-                              >
-                                {isSent ? (
-                                  <>
-                                    <ArrowUpRight size={12} />
-                                    Sent
-                                  </>
-                                ) : (
-                                  <>
-                                    <ArrowDownLeft size={12} />
-                                    Received
-                                  </>
-                                )}
-                              </span>
+                              {tx.type === 'Contract Call' ? (
+                                <span 
+                                  className="badge" 
+                                  style={{
+                                    background: 'rgba(139, 92, 246, 0.08)',
+                                    color: '#a78bfa',
+                                    border: '1px solid rgba(139, 92, 246, 0.15)',
+                                    gap: '0.25rem'
+                                  }}
+                                >
+                                  <Cpu size={12} />
+                                  Contract
+                                </span>
+                              ) : (
+                                <span 
+                                  className="badge" 
+                                  style={{
+                                    background: isSent ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                                    color: isSent ? '#f87171' : '#34d399',
+                                    border: `1px solid ${isSent ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)'}`,
+                                    gap: '0.25rem'
+                                  }}
+                                >
+                                  {isSent ? (
+                                    <>
+                                      <ArrowUpRight size={12} />
+                                      Sent
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ArrowDownLeft size={12} />
+                                      Received
+                                    </>
+                                  )}
+                                </span>
+                              )}
                             </td>
-                            <td style={{ fontWeight: 600, color: isSent ? '#f8fafc' : '#34d399' }}>
-                              {isSent ? '-' : '+'}{parseFloat(tx.amount).toFixed(4)} XLM
+                            <td style={{ fontWeight: 600, color: tx.type === 'Contract Call' ? '#a78bfa' : (isSent ? '#f8fafc' : '#34d399') }}>
+                              {isNaN(parseFloat(tx.amount)) ? tx.amount : `${isSent ? '-' : '+'}${parseFloat(tx.amount).toFixed(4)} XLM`}
                             </td>
                             <td style={{ fontSize: '0.85rem' }}>
                               <code title={isSent ? tx.to : tx.from}>
