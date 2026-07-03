@@ -2,10 +2,10 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import App from './App';
 
-describe('Stellar QuickPay & Soroban Hub dApp', () => {
+describe('StellarPay dApp', () => {
   it('should render the application title correctly', () => {
     render(<App />);
-    const title = screen.getByText(/Stellar QuickPay & Soroban Hub/i);
+    const title = screen.getByText(/StellarPay - Cross-Border Freelancer Payments/i);
     expect(title).toBeInTheDocument();
   });
 
