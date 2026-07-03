@@ -63,6 +63,9 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
             const raw = scValToNative(getSim.result.retval) as any;
             const parseStatus = (statusVal: any): string => {
               if (typeof statusVal === 'string') return statusVal;
+              if (Array.isArray(statusVal) && statusVal.length > 0) {
+                return statusVal[0].toString();
+              }
               if (statusVal && typeof statusVal === 'object') {
                 const keys = Object.keys(statusVal);
                 if (keys.length > 0) return keys[0];

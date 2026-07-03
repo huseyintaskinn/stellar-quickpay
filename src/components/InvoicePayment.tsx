@@ -44,6 +44,9 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
 
   const parseStatus = (statusVal: any): Invoice['status'] => {
     if (typeof statusVal === 'string') return statusVal as Invoice['status'];
+    if (Array.isArray(statusVal) && statusVal.length > 0) {
+      return statusVal[0].toString() as Invoice['status'];
+    }
     if (statusVal && typeof statusVal === 'object') {
       const keys = Object.keys(statusVal);
       if (keys.length > 0) return keys[0] as Invoice['status'];
