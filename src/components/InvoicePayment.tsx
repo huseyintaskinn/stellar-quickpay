@@ -25,6 +25,7 @@ interface InvoicePaymentProps {
   rpcServer: rpc.Server;
   server: any;
   escrowContractId: string;
+  onSuccess?: () => void;
 }
 
 const STATUS_CONFIG = {
@@ -35,7 +36,7 @@ const STATUS_CONFIG = {
 };
 
 export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
-  walletAddress, rpcServer, server, escrowContractId
+  walletAddress, rpcServer, server, escrowContractId, onSuccess
 }) => {
   const [invoiceId, setInvoiceId] = useState('');
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -131,6 +132,9 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
         const label = action === 'pay_invoice' ? 'Payment successful! Funds are now locked in escrow.' : 'Payment released to freelancer!';
         setTxStatus({ type: 'success', message: label });
         await fetchInvoice(); // Refresh invoice state
+        if (onSuccess) {
+          onSuccess();
+        }
       } else {
         throw new Error('Transaction failed.');
       }
