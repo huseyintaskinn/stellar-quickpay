@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   TransactionBuilder, Operation, Networks, rpc,
-  Address, nativeToScVal, scValToNative
+  nativeToScVal, scValToNative
 } from '@stellar/stellar-sdk';
 import { LayoutDashboard, RefreshCw, FileText, TrendingUp, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 
@@ -123,7 +123,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <LayoutDashboard size={20} style={{ color: '#10b981' }} />
           <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>My Invoices</h3>
