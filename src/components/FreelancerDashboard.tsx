@@ -61,13 +61,22 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
           const getSim = await rpcServer.simulateTransaction(getTx) as any;
           if (getSim.result?.retval) {
             const raw = scValToNative(getSim.result.retval) as any;
+            const parseStatus = (statusVal: any): string => {
+              if (typeof statusVal === 'string') return statusVal;
+              if (statusVal && typeof statusVal === 'object') {
+                const keys = Object.keys(statusVal);
+                if (keys.length > 0) return keys[0];
+              }
+              return 'Pending';
+            };
+
             results.push({
               id: Number(raw.id),
               freelancer: raw.freelancer?.toString() || '',
               client: raw.client?.toString() || '',
               amount: (Number(raw.amount) / Math.pow(10, 7)).toFixed(4),
               description: raw.description?.toString() || '',
-              status: Object.keys(raw.status)[0],
+              status: parseStatus(raw.status),
             });
           }
         } catch { /* skip bad invoice */ }

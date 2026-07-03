@@ -501,10 +501,10 @@ function App() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 className="pulse-glow-text" style={{ fontSize: '2.2rem', margin: 0, fontWeight: 800, background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Stellar QuickPay & Soroban Hub
+            StellarPay - Cross-Border Freelancer Payments
           </h1>
           <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.95rem' }}>
-            Journey to Mastery &bull; Level 2 Yellow Belt
+            Journey to Mastery &bull; Level 4 Green Belt
           </p>
         </div>
 

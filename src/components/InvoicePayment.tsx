@@ -42,10 +42,20 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
   const [loadingInvoice, setLoadingInvoice] = useState(false);
   const [txStatus, setTxStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' });
 
+  const parseStatus = (statusVal: any): Invoice['status'] => {
+    if (typeof statusVal === 'string') return statusVal as Invoice['status'];
+    if (statusVal && typeof statusVal === 'object') {
+      const keys = Object.keys(statusVal);
+      if (keys.length > 0) return keys[0] as Invoice['status'];
+    }
+    return 'Pending';
+  };
+
   const fetchInvoice = async () => {
     if (!invoiceId) return;
     setLoadingInvoice(true);
     setInvoice(null);
+    setTxStatus({ type: 'idle', message: '' });
     try {
       const sourceAccount = new (await import('@stellar/stellar-sdk')).Account(walletAddress, '1');
       const invokeOp = Operation.invokeContractFunction({
@@ -64,11 +74,13 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
           client: raw.client.toString(),
           amount: (Number(raw.amount) / Math.pow(10, 7)).toFixed(4),
           description: raw.description?.toString() || '',
-          status: Object.keys(raw.status)[0] as Invoice['status'],
+          status: parseStatus(raw.status),
         });
+      } else {
+        setTxStatus({ type: 'error', message: 'Invoice not found. Please verify the ID and try again.' });
       }
     } catch (err: any) {
-      setTxStatus({ type: 'error', message: 'Invoice not found. Check the ID and try again.' });
+      setTxStatus({ type: 'error', message: 'Invoice lookup failed. Check the ID.' });
     } finally {
       setLoadingInvoice(false);
     }
