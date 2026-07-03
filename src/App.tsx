@@ -516,7 +516,21 @@ function App() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <a
+            href="https://forms.gle/stellar-pay-feedback"
+            target="_blank"
+            rel="noreferrer"
+            className="btn btn-secondary"
+            style={{
+              padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex',
+              alignItems: 'center', gap: '0.35rem', color: '#10b981', background: 'rgba(16,185,129,0.06)',
+              border: '1px solid rgba(16,185,129,0.2)', textDecoration: 'none'
+            }}
+          >
+            <span>Share Feedback 💬</span>
+          </a>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '10px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#06b6d4', boxShadow: '0 0 8px #06b6d4' }}></span>
             <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8' }}>Stellar Testnet</span>
@@ -529,6 +543,27 @@ function App() {
           )}
         </div>
       </header>
+
+      {/* Onboarding Guide */}
+      <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2.5rem', background: 'linear-gradient(135deg, rgba(6,182,212,0.04) 0%, rgba(139,92,246,0.04) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
+        <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#06b6d4', fontWeight: 700 }}>
+          <Info size={18} /> Quick Start Guide (3 Simple Steps)
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', fontSize: '0.875rem', color: '#94a3b8', lineHeight: '1.6' }}>
+          <div>
+            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>1. Connect & Activate</strong>
+            Install Freighter, switch to Testnet, and click Connect. If your balance is 0, click the <strong>Request Faucet XLM</strong> button on the left to activate your wallet.
+          </div>
+          <div>
+            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>2. Create Invoice</strong>
+            Go to the <strong>Create Invoice</strong> tab, type a description, amount, and the client's public address (you can use your own address to test with yourself!).
+          </div>
+          <div>
+            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>3. Pay & Release</strong>
+            The client searches the invoice ID under the <strong>Pay Invoice</strong> tab and pays. Once paid, the freelancer clicks <strong>Release Payment</strong> under <strong>My Invoices</strong> to withdraw!
+          </div>
+        </div>
+      </div>
 
       {/* Core Dashboard / Connection States */}
       {!walletAddress ? (
