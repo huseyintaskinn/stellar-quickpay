@@ -4,7 +4,7 @@ import {
   Address, nativeToScVal, scValToNative
 } from '@stellar/stellar-sdk';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
-import { LayoutDashboard, RefreshCw, FileText, TrendingUp, ArrowUpRight, ArrowDownLeft, Trash2 } from 'lucide-react';
+import { LayoutDashboard, RefreshCw, FileText, TrendingUp, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle2 } from 'lucide-react';
 
 interface Invoice {
   id: number; freelancer: string; client: string;
@@ -32,7 +32,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<'sent' | 'received'>('sent');
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({ total: 0, pending: 0, funded: 0, earned: 0 });
-  const [cancelStatus, setCancelStatus] = useState<{ id: number | null; loading: boolean; error: string | null }>({ id: null, loading: false, error: null });
+  const [actionStatus, setActionStatus] = useState<{ id: number | null; action: 'cancel' | 'release' | null; loading: boolean; error: string | null }>({ id: null, action: null, loading: false, error: null });
 
   const fetchInvoices = useCallback(async () => {
     if (!walletAddress || escrowContractId.includes('YOUR_')) return;
@@ -123,13 +123,14 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
 
   useEffect(() => { fetchInvoices(); }, [fetchInvoices, refreshTrigger]);
 
-  const handleCancel = async (id: number) => {
-    setCancelStatus({ id, loading: true, error: null });
+  const handleInvoiceAction = async (id: number, action: 'cancel_invoice' | 'release_payment') => {
+    const actionKey = action === 'cancel_invoice' ? 'cancel' : 'release';
+    setActionStatus({ id, action: actionKey, loading: true, error: null });
     try {
       const sourceAccount = await server.loadAccount(walletAddress);
       const invokeOp = Operation.invokeContractFunction({
         contract: escrowContractId,
-        function: 'cancel_invoice',
+        function: action,
         args: [
           nativeToScVal(BigInt(id), { type: 'u64' }),
           new Address(walletAddress).toScVal(),
@@ -166,14 +167,14 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
       }
 
       if (statusResponse.status === 'SUCCESS') {
-        setCancelStatus({ id: null, loading: false, error: null });
+        setActionStatus({ id: null, action: null, loading: false, error: null });
         fetchInvoices();
         if (onSuccess) onSuccess();
       } else {
         throw new Error('Transaction failed on-chain.');
       }
     } catch (err: any) {
-      setCancelStatus({ id, loading: false, error: err.message || err.toString() });
+      setActionStatus({ id, action: actionKey, loading: false, error: err.message || err.toString() });
     }
   };
 
@@ -284,8 +285,8 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {activeSubTab === 'sent' && inv.status === 'Pending' && (
                     <button
-                      onClick={() => handleCancel(inv.id)}
-                      disabled={cancelStatus.id === inv.id && cancelStatus.loading}
+                      onClick={() => handleInvoiceAction(inv.id, 'cancel_invoice')}
+                      disabled={actionStatus.id === inv.id && actionStatus.loading}
                       style={{
                         padding: '0.2rem 0.5rem', fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)',
                         border: '1px solid rgba(239,68,68,0.25)', borderRadius: '6px', color: '#f87171',
@@ -293,7 +294,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
                         transition: 'all 0.2s'
                       }}
                     >
-                      {cancelStatus.id === inv.id && cancelStatus.loading ? (
+                      {actionStatus.id === inv.id && actionStatus.action === 'cancel' && actionStatus.loading ? (
                         <RefreshCw size={10} className="spinner" />
                       ) : (
                         <Trash2 size={10} />
@@ -301,14 +302,33 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
                       Cancel
                     </button>
                   )}
+                  {activeSubTab === 'sent' && inv.status === 'Funded' && (
+                    <button
+                      onClick={() => handleInvoiceAction(inv.id, 'release_payment')}
+                      disabled={actionStatus.id === inv.id && actionStatus.loading}
+                      style={{
+                        padding: '0.2rem 0.5rem', fontSize: '0.7rem', background: 'rgba(16,185,129,0.1)',
+                        border: '1px solid rgba(16,185,129,0.25)', borderRadius: '6px', color: '#34d399',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {actionStatus.id === inv.id && actionStatus.action === 'release' && actionStatus.loading ? (
+                        <RefreshCw size={10} className="spinner" />
+                      ) : (
+                        <CheckCircle2 size={10} />
+                      )}
+                      Release Payment
+                    </button>
+                  )}
                   <span style={{ fontSize: '0.7rem', fontWeight: 600, color: STATUS_COLORS[inv.status] || '#94a3b8',
                     background: `${STATUS_COLORS[inv.status] || '#94a3b8'}18`, padding: '0.15rem 0.5rem', borderRadius: '12px', border: `1px solid ${STATUS_COLORS[inv.status] || '#94a3b8'}30` }}>
                     {inv.status}
                   </span>
                 </div>
-                {cancelStatus.id === inv.id && cancelStatus.error && (
+                {actionStatus.id === inv.id && actionStatus.error && (
                   <span style={{ fontSize: '0.65rem', color: '#ef4444', display: 'block', marginTop: '0.15rem' }}>
-                    {cancelStatus.error}
+                    {actionStatus.error}
                   </span>
                 )}
               </div>
