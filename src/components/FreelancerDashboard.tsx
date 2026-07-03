@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   TransactionBuilder, Operation, Networks, rpc,
-  nativeToScVal, scValToNative
+  Address, nativeToScVal, scValToNative
 } from '@stellar/stellar-sdk';
-import { LayoutDashboard, RefreshCw, FileText, TrendingUp, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
+import { LayoutDashboard, RefreshCw, FileText, TrendingUp, ArrowUpRight, ArrowDownLeft, Trash2 } from 'lucide-react';
 
 interface Invoice {
   id: number; freelancer: string; client: string;
@@ -13,8 +14,10 @@ interface Invoice {
 interface FreelancerDashboardProps {
   walletAddress: string;
   rpcServer: rpc.Server;
+  server: any;
   escrowContractId: string;
   refreshTrigger: number;
+  onSuccess?: () => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -22,13 +25,14 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
-  walletAddress, rpcServer, escrowContractId, refreshTrigger
+  walletAddress, rpcServer, server, escrowContractId, refreshTrigger, onSuccess
 }) => {
   const [sentInvoices, setSentInvoices] = useState<Invoice[]>([]);
   const [receivedInvoices, setReceivedInvoices] = useState<Invoice[]>([]);
   const [activeSubTab, setActiveSubTab] = useState<'sent' | 'received'>('sent');
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({ total: 0, pending: 0, funded: 0, earned: 0 });
+  const [cancelStatus, setCancelStatus] = useState<{ id: number | null; loading: boolean; error: string | null }>({ id: null, loading: false, error: null });
 
   const fetchInvoices = useCallback(async () => {
     if (!walletAddress || escrowContractId.includes('YOUR_')) return;
@@ -118,6 +122,60 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
   }, [walletAddress, rpcServer, escrowContractId]);
 
   useEffect(() => { fetchInvoices(); }, [fetchInvoices, refreshTrigger]);
+
+  const handleCancel = async (id: number) => {
+    setCancelStatus({ id, loading: true, error: null });
+    try {
+      const sourceAccount = await server.loadAccount(walletAddress);
+      const invokeOp = Operation.invokeContractFunction({
+        contract: escrowContractId,
+        function: 'cancel_invoice',
+        args: [
+          nativeToScVal(BigInt(id), { type: 'u64' }),
+          new Address(walletAddress).toScVal(),
+        ],
+      });
+      const transaction = new TransactionBuilder(sourceAccount, {
+        fee: '100',
+        networkPassphrase: Networks.TESTNET,
+      }).addOperation(invokeOp).setTimeout(60).build();
+
+      const simResult = await rpcServer.simulateTransaction(transaction) as any;
+      if (simResult.error) throw new Error(`Simulation: ${simResult.error}`);
+      if (!rpc.Api.isSimulationSuccess(simResult)) throw new Error('Simulation failed.');
+
+      const assembledTx = rpc.assembleTransaction(transaction, simResult) as any;
+      const xdrPayload = typeof assembledTx.build === 'function' ? assembledTx.build().toXDR() : assembledTx.toXDR();
+
+      const { signedTxXdr } = await StellarWalletsKit.signTransaction(xdrPayload, {
+        networkPassphrase: Networks.TESTNET,
+        address: walletAddress,
+      });
+      if (!signedTxXdr) throw new Error('Transaction rejected.');
+
+      const signedTx = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
+      const response = await rpcServer.sendTransaction(signedTx);
+      if (response.status === 'ERROR') throw new Error('Submission failed.');
+
+      let attempts = 0;
+      let statusResponse = await rpcServer.getTransaction(response.hash);
+      while (statusResponse.status === 'NOT_FOUND' && attempts < 15) {
+        await new Promise(r => setTimeout(r, 2000));
+        statusResponse = await rpcServer.getTransaction(response.hash);
+        attempts++;
+      }
+
+      if (statusResponse.status === 'SUCCESS') {
+        setCancelStatus({ id: null, loading: false, error: null });
+        fetchInvoices();
+        if (onSuccess) onSuccess();
+      } else {
+        throw new Error('Transaction failed on-chain.');
+      }
+    } catch (err: any) {
+      setCancelStatus({ id, loading: false, error: err.message || err.toString() });
+    }
+  };
 
   const activeInvoices = activeSubTab === 'sent' ? sentInvoices : receivedInvoices;
 
@@ -221,12 +279,38 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
                   }
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
                 <div style={{ fontSize: '1rem', fontWeight: 800, color: '#06b6d4' }}>{inv.amount} XLM</div>
-                <span style={{ fontSize: '0.7rem', fontWeight: 600, color: STATUS_COLORS[inv.status] || '#94a3b8',
-                  background: `${STATUS_COLORS[inv.status] || '#94a3b8'}18`, padding: '0.15rem 0.5rem', borderRadius: '12px', border: `1px solid ${STATUS_COLORS[inv.status] || '#94a3b8'}30` }}>
-                  {inv.status}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {activeSubTab === 'sent' && inv.status === 'Pending' && (
+                    <button
+                      onClick={() => handleCancel(inv.id)}
+                      disabled={cancelStatus.id === inv.id && cancelStatus.loading}
+                      style={{
+                        padding: '0.2rem 0.5rem', fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)',
+                        border: '1px solid rgba(239,68,68,0.25)', borderRadius: '6px', color: '#f87171',
+                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {cancelStatus.id === inv.id && cancelStatus.loading ? (
+                        <RefreshCw size={10} className="spinner" />
+                      ) : (
+                        <Trash2 size={10} />
+                      )}
+                      Cancel
+                    </button>
+                  )}
+                  <span style={{ fontSize: '0.7rem', fontWeight: 600, color: STATUS_COLORS[inv.status] || '#94a3b8',
+                    background: `${STATUS_COLORS[inv.status] || '#94a3b8'}18`, padding: '0.15rem 0.5rem', borderRadius: '12px', border: `1px solid ${STATUS_COLORS[inv.status] || '#94a3b8'}30` }}>
+                    {inv.status}
+                  </span>
+                </div>
+                {cancelStatus.id === inv.id && cancelStatus.error && (
+                  <span style={{ fontSize: '0.65rem', color: '#ef4444', display: 'block', marginTop: '0.15rem' }}>
+                    {cancelStatus.error}
+                  </span>
+                )}
               </div>
             </div>
           ))}

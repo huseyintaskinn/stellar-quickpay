@@ -787,8 +787,10 @@ function App() {
                 <FreelancerDashboard
                   walletAddress={walletAddress!}
                   rpcServer={rpcServer}
+                  server={server}
                   escrowContractId={ESCROW_CONTRACT_ID}
                   refreshTrigger={refreshTrigger}
+                  onSuccess={() => loadAllData(walletAddress!)}
                 />
               )}
 
