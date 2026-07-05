@@ -518,7 +518,7 @@ function App() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <a
-            href="https://forms.gle/stellar-pay-feedback"
+            href="https://forms.gle/DMxtyMvZkgKaEYE59"
             target="_blank"
             rel="noreferrer"
             className="btn btn-secondary"
