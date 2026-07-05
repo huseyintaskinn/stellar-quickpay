@@ -33,6 +33,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState({ total: 0, pending: 0, funded: 0, earned: 0 });
   const [actionStatus, setActionStatus] = useState<{ id: number | null; action: 'cancel' | 'release' | null; loading: boolean; error: string | null }>({ id: null, action: null, loading: false, error: null });
+  const [uniqueTestersCount, setUniqueTestersCount] = useState(0);
 
   const fetchInvoices = useCallback(async () => {
     if (!walletAddress || escrowContractId.includes('YOUR_')) return;
@@ -54,6 +55,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
       const totalCount = Number(scValToNative(countSim.result.retval));
       const sent: Invoice[] = [];
       const received: Invoice[] = [];
+      const testersSet = new Set<string>();
 
       // 2. Fetch all invoices sequentially
       for (let id = 1; id <= totalCount; id++) {
@@ -96,6 +98,9 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
             if (inv.client === walletAddress) {
               received.push(inv);
             }
+
+            testersSet.add(raw.freelancer.toString());
+            testersSet.add(raw.client.toString());
           }
         } catch { /* skip bad invoice */ }
       }
@@ -105,6 +110,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
 
       setSentInvoices(sent);
       setReceivedInvoices(received);
+      setUniqueTestersCount(testersSet.size);
 
       // Calculate stats based on freelancer role
       const earned = sent.filter(i => i.status === 'Released').reduce((s, i) => s + parseFloat(i.amount), 0);
@@ -183,9 +189,20 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <LayoutDashboard size={20} style={{ color: '#10b981' }} />
           <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>My Invoices</h3>
+          {uniqueTestersCount > 0 && (
+            <span style={{
+              fontSize: '0.7rem', fontWeight: 600, padding: '0.15rem 0.5rem', borderRadius: '12px',
+              marginLeft: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+              background: uniqueTestersCount >= 10 ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+              color: uniqueTestersCount >= 10 ? '#34d399' : '#f59e0b',
+              border: `1px solid ${uniqueTestersCount >= 10 ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`
+            }}>
+              👥 {uniqueTestersCount} Active Users {uniqueTestersCount >= 10 ? '🎉 Goal Reached!' : `/ 10 Tester Goal`}
+            </span>
+          )}
         </div>
         <button className="btn btn-secondary" onClick={fetchInvoices} disabled={loading} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
           <RefreshCw size={14} className={loading ? 'spinner' : ''} /> Refresh
