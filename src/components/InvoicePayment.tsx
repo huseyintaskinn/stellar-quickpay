@@ -213,6 +213,27 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
               Release Payment
             </button>
           )}
+
+          {/* User Warnings for unauthorized roles */}
+          {!isClient && invoice.status === 'Pending' && (
+            <div style={{
+              background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)',
+              borderRadius: '8px', padding: '0.875rem', marginTop: '0.5rem', fontSize: '0.8rem',
+              color: '#f59e0b', lineHeight: '1.5', textAlign: 'left'
+            }}>
+              ⚠️ <strong>Client Mismatch:</strong> Only the designated client wallet can pay this invoice. Please switch your Freighter wallet to: <code style={{ display: 'block', wordBreak: 'break-all', marginTop: '0.25rem', color: '#fcd34d' }}>{invoice.client}</code>
+            </div>
+          )}
+
+          {!isFreelancer && invoice.status === 'Funded' && (
+            <div style={{
+              background: 'rgba(6,182,212,0.06)', border: '1px solid rgba(6,182,212,0.2)',
+              borderRadius: '8px', padding: '0.875rem', marginTop: '0.5rem', fontSize: '0.8rem',
+              color: '#06b6d4', lineHeight: '1.5', textAlign: 'left'
+            }}>
+              ℹ️ <strong>Payment Locked:</strong> This invoice has been funded. Only the freelancer (<code>{invoice.freelancer.slice(0, 8)}...{invoice.freelancer.slice(-6)}</code>) can claim/release the payment.
+            </div>
+          )}
         </div>
       )}
     </div>
