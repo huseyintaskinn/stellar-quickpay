@@ -18,6 +18,7 @@ interface FreelancerDashboardProps {
   escrowContractId: string;
   refreshTrigger: number;
   onSuccess?: () => void;
+  t: any;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -25,7 +26,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
-  walletAddress, rpcServer, server, escrowContractId, refreshTrigger, onSuccess
+  walletAddress, rpcServer, server, escrowContractId, refreshTrigger, onSuccess, t
 }) => {
   const [sentInvoices, setSentInvoices] = useState<Invoice[]>([]);
   const [receivedInvoices, setReceivedInvoices] = useState<Invoice[]>([]);
@@ -191,7 +192,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <LayoutDashboard size={20} style={{ color: '#10b981' }} />
-          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>My Invoices</h3>
+          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{t.myInvoices}</h3>
           {uniqueTestersCount > 0 && (
             <span style={{
               fontSize: '0.7rem', fontWeight: 600, padding: '0.15rem 0.5rem', borderRadius: '12px',
@@ -200,12 +201,12 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
               color: uniqueTestersCount >= 10 ? '#34d399' : '#f59e0b',
               border: `1px solid ${uniqueTestersCount >= 10 ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`
             }}>
-              👥 {uniqueTestersCount} Active Users {uniqueTestersCount >= 10 ? '🎉 Goal Reached!' : `/ 10 Tester Goal`}
+              👥 {uniqueTestersCount} {t.activeUsersBadge} {uniqueTestersCount >= 10 ? `🎉 ${t.goalReached}` : `/ 10 ${t.testerGoal}`}
             </span>
           )}
         </div>
         <button className="btn btn-secondary" onClick={fetchInvoices} disabled={loading} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
-          <RefreshCw size={14} className={loading ? 'spinner' : ''} /> Refresh
+          <RefreshCw size={14} className={loading ? 'spinner' : ''} /> {t.refreshBtn}
         </button>
       </div>
 
@@ -220,7 +221,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
           onClick={() => setActiveSubTab('sent')}
         >
           <ArrowUpRight size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
-          Sent Invoices (As Freelancer)
+          {t.sentInvoicesTab}
         </button>
         <button
           style={{
@@ -231,7 +232,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
           onClick={() => setActiveSubTab('received')}
         >
           <ArrowDownLeft size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
-          Received Invoices (As Client)
+          {t.receivedInvoicesTab}
         </button>
       </div>
 
@@ -239,10 +240,10 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
       {activeSubTab === 'sent' ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
           {[
-            { label: 'Total Sent', value: stats.total, color: '#94a3b8', icon: FileText },
-            { label: 'Pending', value: stats.pending, color: '#f59e0b', icon: FileText },
-            { label: 'Funded', value: stats.funded, color: '#06b6d4', icon: FileText },
-            { label: 'Earned (XLM)', value: stats.earned.toFixed(2), color: '#10b981', icon: TrendingUp },
+            { label: t.totalSent, value: stats.total, color: '#94a3b8', icon: FileText },
+            { label: t.pending, value: stats.pending, color: '#f59e0b', icon: FileText },
+            { label: t.funded, value: stats.funded, color: '#06b6d4', icon: FileText },
+            { label: t.earnedXlm, value: stats.earned.toFixed(2), color: '#10b981', icon: TrendingUp },
           ].map(({ label, value, color, icon: Icon }) => (
             <div key={label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '0.875rem', textAlign: 'center' }}>
               <Icon size={16} style={{ color, marginBottom: '0.25rem' }} />
@@ -254,9 +255,9 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
           {[
-            { label: 'Total Received', value: receivedInvoices.length, color: '#a78bfa', icon: FileText },
-            { label: 'Awaiting Pay', value: receivedInvoices.filter(i => i.status === 'Pending').length, color: '#f59e0b', icon: FileText },
-            { label: 'Paid/Funded', value: receivedInvoices.filter(i => i.status === 'Funded' || i.status === 'Released').length, color: '#10b981', icon: FileText },
+            { label: t.totalReceived, value: receivedInvoices.length, color: '#a78bfa', icon: FileText },
+            { label: t.awaitingPay, value: receivedInvoices.filter(i => i.status === 'Pending').length, color: '#f59e0b', icon: FileText },
+            { label: t.paidFunded, value: receivedInvoices.filter(i => i.status === 'Funded' || i.status === 'Released').length, color: '#10b981', icon: FileText },
           ].map(({ label, value, color, icon: Icon }) => (
             <div key={label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '0.875rem', textAlign: 'center' }}>
               <Icon size={16} style={{ color, marginBottom: '0.25rem' }} />
@@ -271,86 +272,92 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
       {loading ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
           <RefreshCw size={24} className="spinner" />
-          <p>Loading invoices...</p>
+          <p>{t.loadingHistory}</p>
         </div>
       ) : activeInvoices.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
           <FileText size={32} style={{ marginBottom: '0.5rem', opacity: 0.4 }} />
-          <p>No invoices found in this category.</p>
+          <p>{t.noPayments}</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {activeInvoices.map(inv => (
-            <div key={inv.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Invoice #{inv.id}</span>
-                  <span style={{ fontSize: '0.65rem', color: '#94a3b8', background: 'rgba(255,255,255,0.05)', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
-                    {activeSubTab === 'sent' ? 'To Client' : 'From Freelancer'}
-                  </span>
+          {activeInvoices.map(inv => {
+            const cardStatusLabel = inv.status === 'Pending' ? t.pending
+              : inv.status === 'Funded' ? t.funded
+              : inv.status === 'Released' ? t.released
+              : t.cancelled;
+            return (
+              <div key={inv.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{t.invoiceIdLabel} #{inv.id}</span>
+                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', background: 'rgba(255,255,255,0.05)', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
+                      {activeSubTab === 'sent' ? t.toClient : t.fromFreelancer}
+                    </span>
+                  </div>
+                  <div style={{ fontWeight: 600, color: '#f1f5f9', fontSize: '0.95rem', marginTop: '0.2rem' }}>{inv.description}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
+                    {activeSubTab === 'sent'
+                      ? `Client: ${inv.client.slice(0, 10)}...${inv.client.slice(-8)}`
+                      : `Freelancer: ${inv.freelancer.slice(0, 10)}...${inv.freelancer.slice(-8)}`
+                    }
+                  </div>
                 </div>
-                <div style={{ fontWeight: 600, color: '#f1f5f9', fontSize: '0.95rem', marginTop: '0.2rem' }}>{inv.description}</div>
-                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
-                  {activeSubTab === 'sent'
-                    ? `Client: ${inv.client.slice(0, 10)}...${inv.client.slice(-8)}`
-                    : `Freelancer: ${inv.freelancer.slice(0, 10)}...${inv.freelancer.slice(-8)}`
-                  }
+                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#06b6d4' }}>{inv.amount} XLM</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {activeSubTab === 'sent' && inv.status === 'Pending' && (
+                      <button
+                        onClick={() => handleInvoiceAction(inv.id, 'cancel_invoice')}
+                        disabled={actionStatus.id === inv.id && actionStatus.loading}
+                        style={{
+                          padding: '0.2rem 0.5rem', fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)',
+                          border: '1px solid rgba(239,68,68,0.25)', borderRadius: '6px', color: '#f87171',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {actionStatus.id === inv.id && actionStatus.action === 'cancel' && actionStatus.loading ? (
+                          <RefreshCw size={10} className="spinner" />
+                        ) : (
+                          <Trash2 size={10} />
+                        )}
+                        {t.cancelBtn}
+                      </button>
+                    )}
+                    {activeSubTab === 'sent' && inv.status === 'Funded' && (
+                      <button
+                        onClick={() => handleInvoiceAction(inv.id, 'release_payment')}
+                        disabled={actionStatus.id === inv.id && actionStatus.loading}
+                        style={{
+                          padding: '0.2rem 0.5rem', fontSize: '0.7rem', background: 'rgba(16,185,129,0.1)',
+                          border: '1px solid rgba(16,185,129,0.25)', borderRadius: '6px', color: '#34d399',
+                          cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {actionStatus.id === inv.id && actionStatus.action === 'release' && actionStatus.loading ? (
+                          <RefreshCw size={10} className="spinner" />
+                        ) : (
+                          <CheckCircle2 size={10} />
+                        )}
+                        {t.releaseBtn}
+                      </button>
+                    )}
+                    <span style={{ fontSize: '0.7rem', fontWeight: 600, color: STATUS_COLORS[inv.status] || '#94a3b8',
+                      background: `${STATUS_COLORS[inv.status] || '#94a3b8'}18`, padding: '0.15rem 0.5rem', borderRadius: '12px', border: `1px solid ${STATUS_COLORS[inv.status] || '#94a3b8'}30` }}>
+                      {cardStatusLabel}
+                    </span>
+                  </div>
+                  {actionStatus.id === inv.id && actionStatus.error && (
+                    <span style={{ fontSize: '0.65rem', color: '#ef4444', display: 'block', marginTop: '0.15rem' }}>
+                      {actionStatus.error}
+                    </span>
+                  )}
                 </div>
               </div>
-              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
-                <div style={{ fontSize: '1rem', fontWeight: 800, color: '#06b6d4' }}>{inv.amount} XLM</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {activeSubTab === 'sent' && inv.status === 'Pending' && (
-                    <button
-                      onClick={() => handleInvoiceAction(inv.id, 'cancel_invoice')}
-                      disabled={actionStatus.id === inv.id && actionStatus.loading}
-                      style={{
-                        padding: '0.2rem 0.5rem', fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)',
-                        border: '1px solid rgba(239,68,68,0.25)', borderRadius: '6px', color: '#f87171',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {actionStatus.id === inv.id && actionStatus.action === 'cancel' && actionStatus.loading ? (
-                        <RefreshCw size={10} className="spinner" />
-                      ) : (
-                        <Trash2 size={10} />
-                      )}
-                      Cancel
-                    </button>
-                  )}
-                  {activeSubTab === 'sent' && inv.status === 'Funded' && (
-                    <button
-                      onClick={() => handleInvoiceAction(inv.id, 'release_payment')}
-                      disabled={actionStatus.id === inv.id && actionStatus.loading}
-                      style={{
-                        padding: '0.2rem 0.5rem', fontSize: '0.7rem', background: 'rgba(16,185,129,0.1)',
-                        border: '1px solid rgba(16,185,129,0.25)', borderRadius: '6px', color: '#34d399',
-                        cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {actionStatus.id === inv.id && actionStatus.action === 'release' && actionStatus.loading ? (
-                        <RefreshCw size={10} className="spinner" />
-                      ) : (
-                        <CheckCircle2 size={10} />
-                      )}
-                      Release Payment
-                    </button>
-                  )}
-                  <span style={{ fontSize: '0.7rem', fontWeight: 600, color: STATUS_COLORS[inv.status] || '#94a3b8',
-                    background: `${STATUS_COLORS[inv.status] || '#94a3b8'}18`, padding: '0.15rem 0.5rem', borderRadius: '12px', border: `1px solid ${STATUS_COLORS[inv.status] || '#94a3b8'}30` }}>
-                    {inv.status}
-                  </span>
-                </div>
-                {actionStatus.id === inv.id && actionStatus.error && (
-                  <span style={{ fontSize: '0.65rem', color: '#ef4444', display: 'block', marginTop: '0.15rem' }}>
-                    {actionStatus.error}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

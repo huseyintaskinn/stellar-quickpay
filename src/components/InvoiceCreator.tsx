@@ -18,10 +18,11 @@ interface InvoiceCreatorProps {
   escrowContractId: string;
   nativeAssetContractId: string;
   onInvoiceCreated: () => void;
+  t: any;
 }
 
 export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
-  walletAddress, rpcServer, server, escrowContractId, nativeAssetContractId, onInvoiceCreated
+  walletAddress, rpcServer, server, escrowContractId, nativeAssetContractId, onInvoiceCreated, t
 }) => {
   const [clientAddress, setClientAddress] = useState('');
   const [amount, setAmount] = useState('');
@@ -32,7 +33,7 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!clientAddress || !amount || !description) return;
-    setStatus({ type: 'loading', message: 'Preparing invoice transaction...' });
+    setStatus({ type: 'loading', message: t.creatingInvoice });
 
     try {
       if (!clientAddress.startsWith('G') || clientAddress.length !== 56)
@@ -60,9 +61,9 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
         networkPassphrase: Networks.TESTNET,
       }).addOperation(invokeOp).setTimeout(60).build();
 
-      setStatus({ type: 'loading', message: 'Simulating transaction...' });
+      setStatus({ type: 'loading', message: t.creatingInvoice });
       const simResult = await rpcServer.simulateTransaction(transaction) as any;
-      if (simResult.error) throw new Error(`Simulation failed: ${simResult.error}`);
+      if (simResult.error) throw new Error(`Simulation: ${simResult.error}`);
       if (!rpc.Api.isSimulationSuccess(simResult)) throw new Error('Simulation failed.');
 
       const assembledTx = rpc.assembleTransaction(transaction, simResult) as any;
@@ -75,7 +76,7 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
       });
       if (!signedTxXdr) throw new Error('Transaction rejected.');
 
-      setStatus({ type: 'loading', message: 'Submitting to Soroban network...' });
+      setStatus({ type: 'loading', message: 'Submitting transaction...' });
       const signedTx = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
       const response = await rpcServer.sendTransaction(signedTx);
       if (response.status === 'ERROR') throw new Error('Submission failed.');
@@ -101,7 +102,7 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
 
         setStatus({
           type: 'success',
-          message: `Invoice #${invoiceId} created! Share the ID below with your client.`,
+          message: `${t.invoiceCreatedSuccess} (${t.invoiceIdLabel} #${invoiceId})`,
           invoiceId: invoiceId,
         });
         setClientAddress('');
@@ -127,7 +128,7 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
         <FileText size={20} style={{ color: '#06b6d4' }} />
-        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>Create New Invoice</h3>
+        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{t.createTitle}</h3>
       </div>
 
       {status.type !== 'idle' && (
@@ -142,7 +143,7 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
       {status.type === 'success' && status.invoiceId && (
         <div style={{ background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '10px', padding: '1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.8rem', color: '#94a3b8' }}>Invoice ID (share with client)</p>
+            <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.8rem', color: '#94a3b8' }}>{t.invoiceIdLabel}</p>
             <code style={{ fontSize: '1.5rem', fontWeight: 800, color: '#06b6d4' }}>#{status.invoiceId}</code>
           </div>
           <button onClick={copyId} style={{ background: copied ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${copied ? '#34d399' : 'rgba(255,255,255,0.1)'}`, borderRadius: '8px', padding: '0.5rem 1rem', color: copied ? '#34d399' : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}>
@@ -153,24 +154,24 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
 
       <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div className="form-group">
-          <label className="form-label">Client Stellar Address</label>
+          <label className="form-label">{t.clientAddress}</label>
           <input type="text" className="form-input" placeholder="G... (56 characters)" value={clientAddress}
             onChange={e => setClientAddress(e.target.value.trim())} required />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
           <div className="form-group">
-            <label className="form-label">Amount (XLM)</label>
+            <label className="form-label">{t.amountLabel}</label>
             <input type="number" step="any" min="0.0001" className="form-input" placeholder="0.0"
               value={amount} onChange={e => setAmount(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label className="form-label">Description</label>
+            <label className="form-label">{t.descriptionLabel}</label>
             <input type="text" className="form-input" placeholder="e.g. Website Design" maxLength={64}
               value={description} onChange={e => setDescription(e.target.value)} required />
           </div>
         </div>
         <button type="submit" className="btn btn-primary" disabled={status.type === 'loading'} style={{ marginTop: '0.5rem' }}>
-          {status.type === 'loading' ? <><RefreshCw size={16} className="spinner" /> Creating...</> : <><FileText size={16} /> Create Invoice</>}
+          {status.type === 'loading' ? <><RefreshCw size={16} className="spinner" /> {t.creatingInvoice}</> : <><FileText size={16} /> {t.createInvoiceBtn}</>}
         </button>
       </form>
     </div>

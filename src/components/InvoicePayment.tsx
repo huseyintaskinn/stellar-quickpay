@@ -26,6 +26,7 @@ interface InvoicePaymentProps {
   server: any;
   escrowContractId: string;
   onSuccess?: () => void;
+  t: any;
 }
 
 const STATUS_CONFIG = {
@@ -36,7 +37,7 @@ const STATUS_CONFIG = {
 };
 
 export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
-  walletAddress, rpcServer, server, escrowContractId, onSuccess
+  walletAddress, rpcServer, server, escrowContractId, onSuccess, t
 }) => {
   const [invoiceId, setInvoiceId] = useState('');
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -81,10 +82,10 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
           status: parseStatus(raw.status),
         });
       } else {
-        setTxStatus({ type: 'error', message: 'Invoice not found. Please verify the ID and try again.' });
+        setTxStatus({ type: 'error', message: t.invoiceNotFound });
       }
     } catch (err: any) {
-      setTxStatus({ type: 'error', message: 'Invoice lookup failed. Check the ID.' });
+      setTxStatus({ type: 'error', message: t.invoiceLookupFailed });
     } finally {
       setLoadingInvoice(false);
     }
@@ -92,7 +93,7 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
 
   const handlePayOrRelease = async (action: 'pay_invoice' | 'release_payment') => {
     if (!invoice) return;
-    setTxStatus({ type: 'loading', message: `Preparing ${action === 'pay_invoice' ? 'payment' : 'release'}...` });
+    setTxStatus({ type: 'loading', message: t.lookingUp });
     try {
       const sourceAccount = await server.loadAccount(walletAddress);
       const args = action === 'pay_invoice'
@@ -103,7 +104,7 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
       const transaction = new TransactionBuilder(sourceAccount, { fee: '100', networkPassphrase: Networks.TESTNET })
         .addOperation(invokeOp).setTimeout(60).build();
 
-      setTxStatus({ type: 'loading', message: 'Simulating...' });
+      setTxStatus({ type: 'loading', message: t.lookingUp });
       const simResult = await rpcServer.simulateTransaction(transaction) as any;
       if (simResult.error) throw new Error(`Simulation: ${simResult.error}`);
       if (!rpc.Api.isSimulationSuccess(simResult)) throw new Error('Simulation failed.');
@@ -129,7 +130,7 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
       }
 
       if (statusResponse.status === 'SUCCESS') {
-        const label = action === 'pay_invoice' ? 'Payment successful! Funds are now locked in escrow.' : 'Payment released to freelancer!';
+        const label = action === 'pay_invoice' ? 'Payment successful! Funds locked.' : 'Payment released!';
         setTxStatus({ type: 'success', message: label });
         await fetchInvoice(); // Refresh invoice state
         if (onSuccess) {
@@ -148,20 +149,27 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
   const isClient = invoice?.client === walletAddress;
   const isFreelancer = invoice?.freelancer === walletAddress;
 
+  const statusLabel = invoice
+    ? invoice.status === 'Pending' ? t.awaitingPay
+      : invoice.status === 'Funded' ? t.paidFunded
+      : invoice.status === 'Released' ? t.released
+      : t.cancelled
+    : '';
+
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
         <CreditCard size={20} style={{ color: '#8b5cf6' }} />
-        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>Pay or Lookup Invoice</h3>
+        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{t.payTitle}</h3>
       </div>
 
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        <input type="number" className="form-input" placeholder="Enter Invoice ID (e.g. 42)"
+        <input type="number" className="form-input" placeholder={t.enterInvoiceId}
           value={invoiceId} onChange={e => setInvoiceId(e.target.value)} />
         <button className="btn btn-secondary" onClick={fetchInvoice} disabled={loadingInvoice || !invoiceId}
           style={{ whiteSpace: 'nowrap' }}>
           {loadingInvoice ? <RefreshCw size={16} className="spinner" /> : <Search size={16} />}
-          Lookup
+          {t.lookupBtn}
         </button>
       </div>
 
@@ -177,19 +185,19 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
       {invoice && statusConf && StatusIcon && (
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h4 style={{ margin: 0, fontSize: '1rem' }}>Invoice #{invoice.id}</h4>
+            <h4 style={{ margin: 0, fontSize: '1rem' }}>{t.invoiceIdLabel} #{invoice.id}</h4>
             <span style={{ background: statusConf.bg, color: statusConf.color, border: `1px solid ${statusConf.color}40`, padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <StatusIcon size={12} /> {statusConf.label}
+              <StatusIcon size={12} /> {statusLabel}
             </span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
             <div>
-              <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem' }}>Description</span>
+              <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem' }}>{t.descriptionLabel}</span>
               <span style={{ color: '#f8fafc', fontWeight: 600 }}>{invoice.description}</span>
             </div>
             <div>
-              <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem' }}>Amount</span>
+              <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem' }}>{t.amount}</span>
               <span style={{ color: '#06b6d4', fontWeight: 800, fontSize: '1.1rem' }}>{invoice.amount} XLM</span>
             </div>
             <div style={{ gridColumn: 'span 2' }}>
@@ -203,14 +211,14 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
             <button className="btn" onClick={() => handlePayOrRelease('pay_invoice')} disabled={txStatus.type === 'loading'}
               style={{ width: '100%', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', color: '#fff' }}>
               {txStatus.type === 'loading' ? <RefreshCw size={16} className="spinner" /> : <CreditCard size={16} />}
-              Pay {invoice.amount} XLM
+              {t.payBtn} {invoice.amount} XLM
             </button>
           )}
           {isFreelancer && invoice.status === 'Funded' && (
             <button className="btn" onClick={() => handlePayOrRelease('release_payment')} disabled={txStatus.type === 'loading'}
               style={{ width: '100%', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff' }}>
               {txStatus.type === 'loading' ? <RefreshCw size={16} className="spinner" /> : <CheckCircle2 size={16} />}
-              Release Payment
+              {t.releaseBtn}
             </button>
           )}
 
@@ -221,7 +229,7 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
               borderRadius: '8px', padding: '0.875rem', marginTop: '0.5rem', fontSize: '0.8rem',
               color: '#f59e0b', lineHeight: '1.5', textAlign: 'left'
             }}>
-              ⚠️ <strong>Client Mismatch:</strong> Only the designated client wallet can pay this invoice. Please switch your Freighter wallet to: <code style={{ display: 'block', wordBreak: 'break-all', marginTop: '0.25rem', color: '#fcd34d' }}>{invoice.client}</code>
+              ⚠️ <strong>{t.clientMismatch}</strong> <code style={{ display: 'block', wordBreak: 'break-all', marginTop: '0.25rem', color: '#fcd34d' }}>{invoice.client}</code>
             </div>
           )}
 
@@ -231,7 +239,7 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
               borderRadius: '8px', padding: '0.875rem', marginTop: '0.5rem', fontSize: '0.8rem',
               color: '#06b6d4', lineHeight: '1.5', textAlign: 'left'
             }}>
-              ℹ️ <strong>Payment Locked:</strong> This invoice has been funded. Only the freelancer (<code>{invoice.freelancer.slice(0, 8)}...{invoice.freelancer.slice(-6)}</code>) can claim/release the payment.
+              ℹ️ <strong>{t.paymentLocked}</strong> (<code>{invoice.freelancer.slice(0, 8)}...{invoice.freelancer.slice(-6)}</code>)
             </div>
           )}
         </div>

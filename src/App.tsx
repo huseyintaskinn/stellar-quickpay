@@ -41,6 +41,7 @@ import { VaultDashboard } from './VaultDashboard';
 import { InvoiceCreator } from './components/InvoiceCreator';
 import { InvoicePayment } from './components/InvoicePayment';
 import { FreelancerDashboard } from './components/FreelancerDashboard';
+import { translations } from './i18n';
 
 interface PaymentTx {
   id: string;
@@ -53,6 +54,9 @@ interface PaymentTx {
 }
 
 function App() {
+  const [lang, setLang] = useState<'en' | 'tr'>('en');
+  const t = translations[lang];
+
   // Wallet State
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<string | null>(null);
@@ -509,14 +513,26 @@ function App() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1 className="pulse-glow-text" style={{ fontSize: '2.2rem', margin: 0, fontWeight: 800, background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            StellarPay - Cross-Border Freelancer Payments
+            {t.title}
           </h1>
           <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.95rem' }}>
-            Journey to Mastery &bull; Level 4 Green Belt
+            {t.subtitle}
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setLang(lang === 'en' ? 'tr' : 'en')}
+            className="btn btn-secondary"
+            style={{
+              padding: '0.5rem 0.8rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex',
+              alignItems: 'center', gap: '0.35rem', color: '#a78bfa', background: 'rgba(139,92,246,0.06)',
+              border: '1px solid rgba(139,92,246,0.2)'
+            }}
+          >
+            🌐 {lang === 'en' ? 'Türkçe (TR)' : 'English (EN)'}
+          </button>
+
           <a
             href="https://forms.gle/DMxtyMvZkgKaEYE59"
             target="_blank"
@@ -528,16 +544,16 @@ function App() {
               border: '1px solid rgba(16,185,129,0.2)', textDecoration: 'none'
             }}
           >
-            <span>Share Feedback 💬</span>
+            <span>{t.feedbackBtn}</span>
           </a>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '10px' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#06b6d4', boxShadow: '0 0 8px #06b6d4' }}></span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8' }}>Stellar Testnet</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8' }}>{t.testnetIndicator}</span>
           </div>
 
           {walletAddress && (
-            <button className="btn btn-secondary" onClick={disconnectWallet} title="Disconnect Wallet" style={{ padding: '0.5rem' }}>
+            <button className="btn btn-secondary" onClick={disconnectWallet} title={t.disconnectBtn} style={{ padding: '0.5rem' }}>
               <LogOut size={18} />
             </button>
           )}
@@ -547,20 +563,20 @@ function App() {
       {/* Onboarding Guide */}
       <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2.5rem', background: 'linear-gradient(135deg, rgba(6,182,212,0.04) 0%, rgba(139,92,246,0.04) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
         <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#06b6d4', fontWeight: 700 }}>
-          <Info size={18} /> Quick Start Guide (3 Simple Steps)
+          <Info size={18} /> {t.guideTitle}
         </h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', fontSize: '0.875rem', color: '#94a3b8', lineHeight: '1.6' }}>
           <div>
-            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>1. Connect & Activate</strong>
-            Install Freighter, switch to Testnet, and click Connect. If your balance is 0, click the <strong>Request Faucet XLM</strong> button on the left to activate your wallet.
+            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>{t.step1Title}</strong>
+            {t.step1Desc}
           </div>
           <div>
-            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>2. Create Invoice</strong>
-            Go to the <strong>Create Invoice</strong> tab, type a description, amount, and the client's public address (you can use your own address to test with yourself!).
+            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>{t.step2Title}</strong>
+            {t.step2Desc}
           </div>
           <div>
-            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>3. Pay & Release</strong>
-            The client searches the invoice ID under the <strong>Pay Invoice</strong> tab and pays. Once paid, the freelancer clicks <strong>Release Payment</strong> under <strong>My Invoices</strong> to withdraw!
+            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>{t.step3Title}</strong>
+            {t.step3Desc}
           </div>
         </div>
       </div>
@@ -572,9 +588,9 @@ function App() {
             <div style={{ background: 'rgba(6, 182, 212, 0.1)', color: '#06b6d4', width: '70px', height: '70px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', marginBottom: '1.5rem', margin: '0 auto 1.5rem auto' }}>
               <Wallet size={36} />
             </div>
-            <h2 style={{ fontSize: '1.6rem', fontWeight: 700, margin: '0 0 0.75rem 0' }}>Connect Your Wallet</h2>
+            <h2 style={{ fontSize: '1.6rem', fontWeight: 700, margin: '0 0 0.75rem 0' }}>{t.connectWallet}</h2>
             <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.6', margin: '0 0 2rem 0' }}>
-              Connect your wallet on testnet to continue. The multi-wallet adapter supports Freighter, Albedo, and xBull wallets.
+              {t.selectWalletDesc}
             </p>
             
             <button 
@@ -591,7 +607,7 @@ function App() {
               ) : (
                 <>
                   <Wallet size={18} />
-                  Connect Wallet
+                  {t.connectBtn}
                 </>
               )}
             </button>
@@ -649,7 +665,7 @@ function App() {
             <div className="glass-panel" style={{ padding: '1.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                 <span className="badge badge-info" style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                  <Wallet size={12} /> Connected
+                  <Wallet size={12} /> {lang === 'en' ? 'Connected' : 'Bağlı'}
                 </span>
                 <button 
                   className="btn btn-secondary" 
@@ -658,23 +674,23 @@ function App() {
                   style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                 >
                   <RefreshCw size={12} className={isRefreshing ? 'spinner' : ''} />
-                  Refresh
+                  {t.refreshBtn}
                 </button>
               </div>
 
               <div style={{ marginBottom: '1.5rem' }}>
-                <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '0.25rem' }}>Public Address</span>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '0.25rem' }}>{lang === 'en' ? 'Public Address' : 'Kamu Adresi'}</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <code style={{ fontSize: '1rem', color: '#e2e8f0', letterSpacing: '0.05em' }}>{truncateAddr(walletAddress)}</code>
                   <button onClick={copyAddress} style={{ background: 'none', border: 'none', color: copied ? '#34d399' : '#64748b', cursor: 'pointer', display: 'inline-flex', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="Copy address">
                     <Copy size={16} />
                   </button>
                 </div>
-                {copied && <span style={{ fontSize: '0.75rem', color: '#34d399', display: 'block', marginTop: '0.1rem' }}>Copied to clipboard!</span>}
+                {copied && <span style={{ fontSize: '0.75rem', color: '#34d399', display: 'block', marginTop: '0.1rem' }}>{lang === 'en' ? 'Copied to clipboard!' : 'Kopyalandı!'}</span>}
               </div>
 
               <div>
-                <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '0.25rem' }}>Native Wallet Balance</span>
+                <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '0.25rem' }}>{t.nativeBalance}</span>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
                   <span style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em' }}>
                     {balance !== null ? balance : '...'}
@@ -687,7 +703,9 @@ function App() {
                 <div className="alert alert-warning" style={{ marginTop: '1.5rem', padding: '0.75rem', fontSize: '0.85rem', gap: '0.5rem' }}>
                   <Info size={16} style={{ flexShrink: 0, marginTop: '0.15rem' }} />
                   <div>
-                    Account not activated on Testnet. Click the Faucet button below to fund and activate it.
+                    {lang === 'en'
+                      ? 'Account not activated on Testnet. Click the Faucet button below to fund and activate it.'
+                      : 'Hesabınız Testnet üzerinde aktif değil. Aktifleştirmek için aşağıdaki musluğu kullanın.'}
                   </div>
                 </div>
               )}
@@ -697,24 +715,24 @@ function App() {
             <div className="glass-panel" style={{ padding: '1.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
                 <Cpu size={18} style={{ color: '#8b5cf6' }} />
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>Soroban Smart Contract</h3>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>{lang === 'en' ? 'Soroban Smart Contract' : 'Soroban Akıllı Sözleşmesi'}</h3>
               </div>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.875rem' }}>
                 <div>
-                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>Native Token Contract ID</span>
+                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>{lang === 'en' ? 'Native Token Contract ID' : 'Yerel Token Sözleşme ID'}</span>
                   <code style={{ fontSize: '0.8rem', color: '#e2e8f0', wordBreak: 'break-all' }}>{contractId}</code>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div>
-                    <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>Token Symbol</span>
+                    <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>{lang === 'en' ? 'Token Symbol' : 'Token Sembolü'}</span>
                     <span style={{ fontWeight: 600, color: '#f8fafc' }}>
                       {loadingContract ? '...' : contractSymbol || 'N/A'}
                     </span>
                   </div>
                   <div>
-                    <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>Decimals</span>
+                    <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>{lang === 'en' ? 'Decimals' : 'Ondalık Hane'}</span>
                     <span style={{ fontWeight: 600, color: '#f8fafc' }}>
                       {loadingContract ? '...' : contractDecimals !== null ? contractDecimals : 'N/A'}
                     </span>
@@ -722,7 +740,7 @@ function App() {
                 </div>
 
                 <div>
-                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>Connected Account Contract Balance</span>
+                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>{t.contractBalance}</span>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
                     <span style={{ fontSize: '1.4rem', fontWeight: 700, color: '#8b5cf6' }}>
                       {loadingContract ? '...' : contractBalance || '0.0000'}
@@ -740,9 +758,9 @@ function App() {
 
             {/* Faucet Card */}
             <div className="glass-panel" style={{ padding: '1.75rem' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>Testnet Faucet</h3>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>{t.faucetTitle}</h3>
               <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1.25rem 0', lineHeight: '1.5' }}>
-                Need testnet funds? Request 10,000 XLM from Friendbot to activate your account and run test payments.
+                {t.faucetDesc}
               </p>
               <button 
                 className="btn btn-secondary" 
@@ -753,12 +771,12 @@ function App() {
                 {isFunding ? (
                   <>
                     <RefreshCw size={16} className="spinner" />
-                    Funding Account...
+                    {t.faucetFunding}
                   </>
                 ) : (
                   <>
                     <PlusCircle size={16} />
-                    Request Faucet XLM
+                    {t.faucetBtn}
                   </>
                 )}
               </button>
@@ -771,11 +789,11 @@ function App() {
               {/* Tabs */}
               <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '1.5rem', gap: '0.25rem', overflowX: 'auto' }}>
                 {[
-                  { key: 'create-invoice', label: 'Create Invoice', icon: FileText, color: '#10b981' },
-                  { key: 'pay-invoice',    label: 'Pay Invoice',    icon: CreditCard, color: '#8b5cf6' },
-                  { key: 'dashboard',     label: 'My Invoices',    icon: LayoutDashboard, color: '#06b6d4' },
-                  { key: 'classic',       label: 'Send XLM',       icon: Send, color: '#06b6d4' },
-                  { key: 'soroban',       label: 'Vault',          icon: Cpu, color: '#8b5cf6' },
+                  { key: 'create-invoice', label: t.createTitle, icon: FileText, color: '#10b981' },
+                  { key: 'pay-invoice',    label: t.payTitle,    icon: CreditCard, color: '#8b5cf6' },
+                  { key: 'dashboard',     label: t.myInvoices,    icon: LayoutDashboard, color: '#06b6d4' },
+                  { key: 'classic',       label: t.sent,       icon: Send, color: '#06b6d4' },
+                  { key: 'soroban',       label: t.contractCall,          icon: Cpu, color: '#8b5cf6' },
                 ].map(({ key, label, icon: Icon, color }) => (
                   <button
                     key={key}
@@ -803,6 +821,7 @@ function App() {
                   escrowContractId={ESCROW_CONTRACT_ID}
                   nativeAssetContractId={NATIVE_ASSET_CONTRACT_ID}
                   onInvoiceCreated={() => setRefreshTrigger(t => t + 1)}
+                  t={t}
                 />
               )}
 
@@ -814,6 +833,7 @@ function App() {
                   server={server}
                   escrowContractId={ESCROW_CONTRACT_ID}
                   onSuccess={() => loadAllData(walletAddress!)}
+                  t={t}
                 />
               )}
 
@@ -826,6 +846,7 @@ function App() {
                   escrowContractId={ESCROW_CONTRACT_ID}
                   refreshTrigger={refreshTrigger}
                   onSuccess={() => loadAllData(walletAddress!)}
+                  t={t}
                 />
               )}
 
@@ -885,27 +906,27 @@ function App() {
           {/* Bottom Row: Recent Transaction History */}
           <div style={{ gridColumn: 'span 12' }}>
             <div className="glass-panel" style={{ padding: '1.75rem' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 1.25rem 0' }}>Recent Payments</h3>
+               <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 1.25rem 0' }}>{t.recentPayments}</h3>
               
               {loadingHistory ? (
                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '3rem 0', gap: '0.5rem', color: '#94a3b8' }}>
                   <RefreshCw size={18} className="spinner" />
-                  Loading payment history...
+                  {t.loadingHistory}
                 </div>
               ) : history.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '3rem 0', color: '#475569' }}>
-                  No payment operations found for this account.
+                  {t.noPayments}
                 </div>
               ) : (
                 <div className="custom-table-container">
                   <table className="custom-table">
                     <thead>
                       <tr>
-                        <th>Direction</th>
-                        <th>Amount</th>
-                        <th>Address</th>
-                        <th>Timestamp</th>
-                        <th>Tx Hash</th>
+                        <th>{t.direction}</th>
+                        <th>{t.amount}</th>
+                        <th>{t.address}</th>
+                        <th>{t.timestamp}</th>
+                        <th>{t.txHash}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -925,7 +946,7 @@ function App() {
                                   }}
                                 >
                                   <Cpu size={12} />
-                                  Contract
+                                  {t.contractCall}
                                 </span>
                               ) : (
                                 <span 
@@ -940,12 +961,12 @@ function App() {
                                   {isSent ? (
                                     <>
                                       <ArrowUpRight size={12} />
-                                      Sent
+                                      {t.sent}
                                     </>
                                   ) : (
                                     <>
                                       <ArrowDownLeft size={12} />
-                                      Received
+                                      {t.received}
                                     </>
                                   )}
                                 </span>
