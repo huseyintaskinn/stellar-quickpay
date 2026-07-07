@@ -10,13 +10,13 @@ StellarPay enables freelancers around the globe to easily generate secure invoic
 
 | Requirement | Value / Link |
 | :--- | :--- |
-| **Live Demo Link** | `https://huseyintaskinn.com.tr/stellar-quickpay/` |
+| **Live Demo Link** | [`https://huseyintaskin.com.tr/stellar-quickpay/`](https://huseyintaskin.com.tr/stellar-quickpay/) |
 | **Soroban Escrow Contract ID** | `CDREZXFNVSVQZLFJG4U3XBPA2CVYH2GJNK3MADHJFNHZTXETLEAFF5SK` |
 | **Escrow payment Transaction Hash** | [`21280ba3292852dea4b2efee528553cb70c55f6e73b15bfc230935e622de4abb`](https://stellar.expert/explorer/testnet/tx/21280ba3292852dea4b2efee528553cb70c55f6e73b15bfc230935e622de4abb) |
 | **User Feedback Link (Google Form)** | [Google Form Link](https://forms.gle/DMxtyMvZkgKaEYE59) |
 | **User Feedback Responses (Google Sheets)** | [Google Sheets Link](https://docs.google.com/spreadsheets/d/1dUZSbEjbv271jrsgxIE_9C5mWJLiTgE0ZD8oY9WkP40/edit?usp=sharing) |
 | **User Testing Status** | **11 Active Users** (100% Goal Reached! 🎉) |
-| **Demo Video Link (1-2 mins)** | `YOUR_LEVEL4_VIDEO_LINK` *(Ekran kaydı alıp Drive veya YouTube yükleyerek linkini buraya ekleyin)* |
+| **Demo Video Link (1-2 mins)** | [`Google Drive Demo Video`](https://drive.google.com/file/d/154AXYImlzgxtTlkZKssIB-_SN80mU3qo/view?usp=sharing) |
 
 ---
 
@@ -101,22 +101,19 @@ Open `http://localhost:5173` in your browser.
 
 ## 📸 Level 4 Submission Proof Screenshots
 
-*(Lütfen cüzdanınızla işlem yaptıktan sonra kendi ekran görüntülerinizle bu alanları doldurun)*
-
 ### 1. Double-Sided Invoice Dashboard (Sent & Received Tabs)
-*Freelancer ve Müşteri sekmelerini içeren My Invoices panelinin ekran görüntüsü.*
 
-[Buraya Dashboard Ekran Görüntüsünü Ekleyin]
+<img width="882" height="861" alt="image" src="https://github.com/user-attachments/assets/43ab25f1-45c5-4757-a9b6-66fbd10e720b" />
+
 
 ### 2. Pay Invoice & Action Buttons
-*Arama ekranında fatura detayının ve altındaki ödeme/release butonlarının görünümü.*
 
-[Buraya Fatura Arama ve Ödeme Ekran Görüntüsünü Ekleyin]
+<img width="887" height="637" alt="image" src="https://github.com/user-attachments/assets/61437b4c-e1da-4a6c-8da9-4df5eb06c972" />
+
 
 ### 3. CI/CD Success Logs (Both Contracts Cargo Test)
-*GitHub Actions loglarındaki Rust sözleşme testlerinin başarıyla geçtiğini gösteren görsel.*
 
-[Buraya CI/CD Başarı Ekran Görüntüsünü Ekleyin]
+<img width="1865" height="821" alt="image" src="https://github.com/user-attachments/assets/98c15f1d-ea52-44e9-a309-fd32862a2365" />
 
 ---
 
