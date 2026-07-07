@@ -82,6 +82,7 @@ export const translations = {
     // Level 5 Additions
     dashboardTab: "Dashboard",
     advancedTab: "Advanced",
+    advancedVaultTitle: "Advanced Vault Dashboard",
     leaderboardTitle: "Top Active Testers",
     badgesTitle: "Trust Badges",
     trustProfileTitle: "Freelancer Trust Profile",
@@ -101,7 +102,35 @@ export const translations = {
     trustAnchor: "Trust Anchor",
     trustAnchorDesc: "Successfully completed 5+ invoices",
     highVolume: "High Volume",
-    highVolumeDesc: "Completed transactions of 500+ XLM"
+    highVolumeDesc: "Completed transactions of 500+ XLM",
+
+    // Classic payment additions
+    sendClassicPayment: "Send Classic Payment",
+    recipientAddress: "Recipient Address",
+    amountXlm: "Amount (XLM)",
+    memoOptional: "Memo (Optional)",
+    sendTransactionBtn: "Send Transaction",
+
+    // Vault dashboard additions
+    vaultBalanceTitle: "Your Vault Balance",
+    vaultContractId: "Contract ID",
+    vaultDeposit: "Deposit XLM",
+    vaultWithdraw: "Withdraw XLM",
+    vaultLiveEvents: "Live Contract Events",
+    vaultStreaming: "STREAMING",
+    vaultNoEvents: "No recent vault events found in the last 100 ledgers.",
+    vaultPreparingTx: "Preparing transaction...",
+    vaultSimulating: "Simulating on RPC...",
+    vaultAssembling: "Assembling and signing...",
+    vaultSubmitting: "Submitting to network...",
+    vaultWaiting: "Waiting for consensus...",
+    vaultDepositSuccess: "Successfully deposited XLM!",
+    vaultWithdrawSuccess: "Successfully withdrew XLM!",
+
+    // Demo Mode Additions
+    demoModeBtn: "Try Live Demo Mode",
+    demoModeActive: "Demo Mode Active (Simulated Wallet)",
+    demoModeExit: "Exit Demo Mode"
   },
   tr: {
     // App.tsx
@@ -186,6 +215,7 @@ export const translations = {
     // Level 5 Additions
     dashboardTab: "Kontrol Paneli",
     advancedTab: "Gelişmiş",
+    advancedVaultTitle: "Gelişmiş Kasa Kontrol Paneli",
     leaderboardTitle: "En Aktif Test Kullanıcıları",
     badgesTitle: "Güven Rozetleri",
     trustProfileTitle: "Freelancer Güven Profili",
@@ -205,6 +235,34 @@ export const translations = {
     trustAnchor: "Güven Kaynağı",
     trustAnchorDesc: "5+ faturayı hiçbir sorunsuz başarıyla tamamladın",
     highVolume: "Yüksek Hacim",
-    highVolumeDesc: "500+ XLM üzerinde işlem tamamladın"
+    highVolumeDesc: "500+ XLM üzerinde işlem tamamladın",
+
+    // Classic payment additions
+    sendClassicPayment: "Klasik Ödeme Gönder",
+    recipientAddress: "Alıcı Adresi",
+    amountXlm: "Tutar (XLM)",
+    memoOptional: "Memo (İsteğe Bağlı)",
+    sendTransactionBtn: "İşlemi Gönder",
+
+    // Vault dashboard additions
+    vaultBalanceTitle: "Kasa Bakiyeniz",
+    vaultContractId: "Sözleşme ID",
+    vaultDeposit: "XLM Yatır",
+    vaultWithdraw: "XLM Çek",
+    vaultLiveEvents: "Canlı Sözleşme Olayları",
+    vaultStreaming: "AKICI",
+    vaultNoEvents: "Son 100 ledger içinde son kasa olayı bulunamadı.",
+    vaultPreparingTx: "İşlem hazırlanıyor...",
+    vaultSimulating: "RPC üzerinde simüle ediliyor...",
+    vaultAssembling: "Birleştiriliyor ve imzalanıyor...",
+    vaultSubmitting: "Ağa gönderiliyor...",
+    vaultWaiting: "Konsensüs bekleniyor...",
+    vaultDepositSuccess: "Başarıyla XLM yatırıldı!",
+    vaultWithdrawSuccess: "Başarıyla XLM çekildi!",
+
+    // Demo Mode Additions
+    demoModeBtn: "Canlı Demo Modunu Dene",
+    demoModeActive: "Demo Modu Aktif (Simüle Cüzdan)",
+    demoModeExit: "Demo Modundan Çık"
   }
 };

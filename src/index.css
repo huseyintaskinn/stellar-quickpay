@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Fira+Code:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Fira+Code:wght@400;600;700&display=swap');
 
 /* ─── Postmodern & Neo-Brutalist Tokens ───────────────────────── */
 :root {
-  --bg:            #050505;
-  --bg-dots:       rgba(255, 255, 255, 0.015);
-  --surface:       #0d0d0d;
-  --surface-hover: #141414;
-  --border:        #1f1f1f;
-  --border-neon:   #ffffff;
+  --bg:            #060608;
+  --bg-dots:       rgba(245, 197, 24, 0.015);
+  --surface:       #0c0d12;
+  --surface-hover: #12141c;
+  --border:        #1d1f2b;
+  --border-neon:   #3b82f6;
   
   /* Postmodern Colors */
   --accent:        #F5C518; /* Neo-brutalist Gold */
@@ -16,16 +16,16 @@
   --accent-cyan:   #06b6d4; /* Electric Cyan */
   
   --text-primary:  #FFFFFF;
-  --text-secondary:#8e8e8e;
-  --text-muted:    #4a4a4a;
+  --text-secondary:#94a3b8;
+  --text-muted:    #475569;
   
-  --font-display:  'Playfair Display', Georgia, serif;
-  --font-sans:     'Inter', sans-serif;
-  --font-mono:     'Fira Code', 'SFMono-Regular', monospace;
+  --font-display:  'Outfit', sans-serif;
+  --font-sans:     'Plus Jakarta Sans', sans-serif;
+  --font-mono:     'Space Grotesk', 'Fira Code', monospace;
   
   /* Neo-brutalist Shadow */
   --shadow-offset: 4px 4px 0px #000;
-  --shadow-accent: 4px 4px 0px var(--accent);
+  --shadow-accent: 0 0 20px rgba(245, 197, 24, 0.1);
 }
 
 /* ─── Global Base ─────────────────────────────────────────────── */
@@ -68,8 +68,8 @@ body {
 /* ─── Typography & Postmodern Accents ────────────────────────── */
 h1, h2, h3, h4 {
   font-family: var(--font-display);
-  font-weight: 900;
-  letter-spacing: -0.02em;
+  font-weight: 800;
+  letter-spacing: -0.03em;
   color: var(--text-primary);
 }
 
@@ -88,7 +88,7 @@ code, pre {
 .content-wrapper {
   flex: 1;
   padding: 2rem 1.5rem;
-  max-width: 1300px;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
   margin-top: 80px; /* Offset for navbar */
@@ -101,14 +101,14 @@ code, pre {
   top: 0;
   left: 0;
   right: 0;
-  height: 70px;
+  height: 75px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 2rem;
-  background: rgba(5, 5, 5, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(6, 6, 8, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-bottom: 2px solid var(--border);
   z-index: 1000;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -117,33 +117,37 @@ code, pre {
 .navbar-logo {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .navbar-logo-icon {
-  width: 32px;
-  height: 32px;
-  background: var(--accent);
-  border: 2px solid #000;
-  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+  background: #000;
+  border: 2px solid var(--accent);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000;
-  box-shadow: 2px 2px 0px #000;
+  color: var(--accent);
+  box-shadow: 0 0 10px rgba(245, 197, 24, 0.15);
 }
 
 .navbar-logo-text {
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 900;
-  font-style: italic;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, #fff 0%, var(--text-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .navbar-nav {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--border);
   padding: 0.25rem;
@@ -151,15 +155,15 @@ code, pre {
 }
 
 .navbar-link {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.85rem;
   border-radius: 6px;
   color: var(--text-secondary);
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
   background: none;
   border: none;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -167,39 +171,39 @@ code, pre {
 
 .navbar-link:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .navbar-link.active {
   color: #000;
   background: var(--accent);
   border: 1.5px solid #000;
-  box-shadow: 2px 2px 0px rgba(255, 255, 255, 0.1);
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
 }
 
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 /* Testnet badge */
 .testnet-badge {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.8rem;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
   border: 1.5px solid var(--border);
   background: var(--surface);
   font-family: var(--font-mono);
   font-size: 0.72rem;
   font-weight: 700;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .testnet-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--accent-emerald);
   box-shadow: 0 0 8px var(--accent-emerald);
@@ -209,18 +213,18 @@ code, pre {
 .wallet-chip {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.75rem;
+  gap: 0.4rem;
+  padding: 0.4rem 0.7rem;
   border: 1.5px solid var(--border);
   background: var(--surface);
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  border-radius: 4px;
+  font-size: 0.72rem;
+  border-radius: 6px;
 }
 
 .wallet-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--accent-emerald);
 }
@@ -229,7 +233,7 @@ code, pre {
 .navbar-burger {
   display: none;
   background: none;
-  border: 2px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: 6px;
   padding: 0.45rem;
   color: var(--text-primary);
@@ -239,17 +243,16 @@ code, pre {
 
 .navbar-burger:hover {
   background: var(--surface);
-  border-color: var(--text-secondary);
 }
 
 /* Mobile dropdown nav */
 .mobile-nav-overlay {
   display: none;
   position: fixed;
-  top: 70px;
+  top: 75px;
   left: 0;
   right: 0;
-  background: rgba(5, 5, 5, 0.95);
+  background: rgba(6, 6, 8, 0.95);
   backdrop-filter: blur(25px);
   border-bottom: 2px solid var(--border);
   padding: 1rem;
@@ -265,8 +268,8 @@ code, pre {
 /* ─── Postmodern Cards & Layouts ──────────────────────────────── */
 .card {
   background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
   padding: 1.75rem;
   position: relative;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -274,9 +277,9 @@ code, pre {
 }
 
 .card:hover {
-  border-color: var(--border-neon);
-  transform: translate(-1px, -1px);
-  box-shadow: 5px 5px 0px #000;
+  border-color: var(--text-secondary);
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px #000;
 }
 
 .card-title-mono {
@@ -286,7 +289,7 @@ code, pre {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -298,13 +301,13 @@ code, pre {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.65rem 1.25rem;
-  border-radius: 4px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-  border: 2px solid #000;
+  border: 1.5px solid #000;
   font-family: var(--font-sans);
   box-shadow: 2px 2px 0px #000;
 }
@@ -348,7 +351,7 @@ code, pre {
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.04);
   border-color: var(--text-secondary);
 }
 
@@ -372,7 +375,7 @@ code, pre {
 .form-input {
   width: 100%;
   padding: 0.75rem 1rem;
-  border-radius: 4px;
+  border-radius: 6px;
   background: #000000;
   border: 2px solid var(--border);
   color: var(--text-primary);
@@ -395,15 +398,15 @@ code, pre {
 /* ─── Custom Responsive Tables ────────────────────────────────── */
 .custom-table-container {
   overflow-x: auto;
-  border: 2px solid var(--border);
-  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
 }
 
 .custom-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
 }
 
 .custom-table th {
@@ -412,14 +415,14 @@ code, pre {
   color: var(--text-secondary);
   font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   border-bottom: 2px solid var(--border);
 }
 
 .custom-table td {
-  padding: 1rem 1.1rem;
+  padding: 0.9rem 1.1rem;
   border-bottom: 1.5px solid var(--border);
   color: var(--text-primary);
   vertical-align: middle;
@@ -433,62 +436,123 @@ code, pre {
   background: rgba(255, 255, 255, 0.01);
 }
 
-/* ─── Postmodern Badges & Stickers ────────────────────────────── */
-.badge {
-  display: inline-flex;
+/* ─── Trust Badges (Redesigned) ────────────────────────────────── */
+.trust-badge-card {
+  display: flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.6rem;
-  border-radius: 3px;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  border: 1px solid currentColor;
+  gap: 0.85rem;
+  padding: 0.85rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1.5px solid var(--border);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Sticker Badges for Gamification */
-.sticker-badge {
-  display: inline-flex;
-  flex-direction: column;
+.trust-badge-card.unlocked {
+  background: rgba(245, 197, 24, 0.03);
+  border-color: rgba(245, 197, 24, 0.25);
+  box-shadow: 0 0 15px rgba(245, 197, 24, 0.04);
+}
+
+.trust-badge-card.unlocked:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(245, 197, 24, 0.15);
+  transform: translateY(-2px);
+}
+
+.trust-badge-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.8rem;
-  border: 2px solid #000;
-  background: var(--surface);
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px dashed var(--border);
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.unlocked .trust-badge-icon-wrapper {
+  background: rgba(245, 197, 24, 0.1);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 10px rgba(245, 197, 24, 0.2);
+}
+
+.trust-badge-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.trust-badge-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.unlocked .trust-badge-name {
+  color: #fff;
+}
+
+.trust-badge-desc {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.trust-badge-status {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.unlocked .trust-badge-status {
+  color: var(--accent);
+  border-color: rgba(245, 197, 24, 0.3);
+  background: rgba(245, 197, 24, 0.08);
+}
+
+/* ─── Demo Banner ─────────────────────────────────────────────── */
+.demo-banner {
+  background: var(--accent-purple);
+  color: #ffffff;
+  padding: 0.5rem 1rem;
   text-align: center;
-  transition: all 0.2s;
-  box-shadow: 2px 2px 0px #000;
-}
-
-.sticker-badge.unlocked {
-  background: var(--accent-emerald);
-  color: #000000;
-  transform: rotate(-3deg);
-  box-shadow: 3px 3px 0px #000;
-}
-
-.sticker-badge.unlocked:nth-child(even) {
-  transform: rotate(3deg);
-}
-
-.sticker-badge.locked {
-  opacity: 0.35;
-  filter: grayscale(1);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border-bottom: 2px solid #000;
+  z-index: 1001;
 }
 
 /* ─── Alerts ──────────────────────────────────────────────────── */
 .alert {
   padding: 1rem 1.25rem;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
   border: 2px solid #000;
   box-shadow: var(--shadow-offset);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
 }
 
 .alert-success {
@@ -516,8 +580,6 @@ code, pre {
   to   { transform: rotate(360deg); }
 }
 
-.pulse-glow-text {}
-
 /* ─── Responsive Media Queries ────────────────────────────────── */
 @media (max-width: 900px) {
   .content-wrapper {
@@ -535,42 +597,27 @@ code, pre {
 
   .navbar {
     padding: 0 1rem;
+    height: 65px;
+  }
+
+  .mobile-nav-overlay {
+    top: 65px;
   }
   
-  /* Responsive Tables as Cards */
-  .custom-table, .custom-table thead, .custom-table tbody, .custom-table th, .custom-table td, .custom-table tr {
-    display: block;
-  }
-  
-  .custom-table th {
+  /* Hide testnet badge on small mobiles to avoid crowding */
+  .testnet-badge {
     display: none;
-  }
-  
-  .custom-table tr {
-    border-bottom: 2px solid var(--border);
-    padding: 1rem 0;
-  }
-  
-  .custom-table td {
-    border-bottom: none;
-    padding: 0.4rem 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .custom-table td::before {
-    content: attr(data-label);
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    font-weight: 700;
   }
 }
 
-@media (min-width: 901px) {
-  .content-wrapper {
-    margin-top: 70px;
+@media (max-width: 480px) {
+  /* Extremely small viewports - truncate wallet chip more */
+  .wallet-chip {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.68rem;
+  }
+  
+  .navbar-logo-text {
+    font-size: 1.1rem;
   }
 }

@@ -25,7 +25,7 @@ interface InvoicePaymentProps {
   rpcServer: rpc.Server;
   server: any;
   escrowContractId: string;
-  onSuccess?: () => void;
+  onSuccess?: (id: string) => void;
   t: any;
 }
 
@@ -62,6 +62,24 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
     setInvoice(null);
     setTxStatus({ type: 'idle', message: '' });
     try {
+      if (walletAddress.startsWith('GDEMO')) {
+        const idNum = Number(invoiceId);
+        if (idNum === 1 || idNum === 2 || idNum === 3 || idNum === 4 || idNum === 5) {
+          setInvoice({
+            id: idNum,
+            freelancer: idNum <= 3 ? walletAddress : 'GCZDX5E7RT7BTTA6VJC7YYHOYQYNHRDGEDB3O32K74VC52LC7XFCEZTH',
+            client: idNum <= 3 ? 'GBGHSPQEIZGJOJJDJYG5VVIPU7THJQU2Z4B6V5VF5IHUQ2SOLIRITDQS' : walletAddress,
+            amount: (idNum * 50).toFixed(4),
+            description: idNum === 1 ? 'Website Redesign Proposal' : idNum === 2 ? 'Logo Design Delivery' : idNum === 3 ? 'Smart Contract Audit' : idNum === 4 ? 'Content Writing Phase 1' : 'React Mobile App Setup',
+            status: idNum === 1 ? 'Pending' : idNum === 2 ? 'Funded' : idNum === 3 ? 'Released' : idNum === 4 ? 'Pending' : 'Released'
+          });
+        } else {
+          setTxStatus({ type: 'error', message: t.invoiceNotFound });
+        }
+        setLoadingInvoice(false);
+        return;
+      }
+
       const sourceAccount = new (await import('@stellar/stellar-sdk')).Account(walletAddress, '1');
       const invokeOp = Operation.invokeContractFunction({
         contract: escrowContractId,
@@ -95,6 +113,15 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
     if (!invoice) return;
     setTxStatus({ type: 'loading', message: t.lookingUp });
     try {
+      if (walletAddress.startsWith('GDEMO')) {
+        setTxStatus({ type: 'loading', message: 'Simulating transaction in Demo Mode...' });
+        await new Promise(r => setTimeout(r, 1500));
+        setTxStatus({ type: 'success', message: 'Demo Mode Success: Transaction simulated successfully!' });
+        setInvoice(prev => prev ? { ...prev, status: action === 'pay_invoice' ? 'Funded' : 'Released' } : null);
+        if (onSuccess) onSuccess(invoice.id.toString());
+        return;
+      }
+
       const sourceAccount = await server.loadAccount(walletAddress);
       const args = action === 'pay_invoice'
         ? [nativeToScVal(BigInt(invoice.id), { type: 'u64' }), new Address(walletAddress).toScVal()]
@@ -134,7 +161,7 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
         setTxStatus({ type: 'success', message: label });
         await fetchInvoice(); // Refresh invoice state
         if (onSuccess) {
-          onSuccess();
+          onSuccess(invoice.id.toString());
         }
       } else {
         throw new Error('Transaction failed.');

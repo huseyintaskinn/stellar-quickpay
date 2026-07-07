@@ -17,9 +17,10 @@ interface VaultDashboardProps {
   rpcServer: rpc.Server;
   server: any; // Horizon server
   onSuccess: () => void;
+  t: any;
 }
 
-export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, rpcServer, server, onSuccess }) => {
+export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, rpcServer, server, onSuccess, t }) => {
   const VAULT_CONTRACT_ID = 'CCPOQABR5MGO3NPRJCI75EYTW43JCKUUSR4DJLIZLWKLJFVUZY5K5GV2'; // Will be replaced by CI/CD or User
   const NATIVE_ASSET_CONTRACT_ID = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 
@@ -81,8 +82,6 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
           let user = '';
           
           try {
-             // Basic parsing of Soroban event values (requires proper XDR parsing in production)
-             // For this demo, we parse the raw event assuming first topic is function name
              const topics = e.topic;
              if (topics && topics.length > 0) {
                  const sym = scValToNative(topics[0]);
@@ -102,7 +101,6 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
           return { id: e.id, type, ledger: e.ledger, user, amount };
         });
         
-        // Filter out empty parses
         const validEvents = formattedEvents.filter((e) => e.type !== 'Unknown');
         setEvents(validEvents.reverse());
       }
@@ -114,7 +112,6 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
   useEffect(() => {
     fetchVaultBalance();
     
-    // Start Event Polling Loop
     if (!isPolling) {
       setIsPolling(true);
       const interval = setInterval(() => {
@@ -129,7 +126,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
         setTxStatus({ type: 'error', message: 'Please update YOUR_VAULT_CONTRACT_ID in the code after CI/CD deployment!' });
         return;
     }
-    setTxStatus({ type: 'loading', message: `Preparing ${method} transaction...` });
+    setTxStatus({ type: 'loading', message: t.vaultPreparingTx });
     try {
       const parsedAmount = parseFloat(amountStr);
       if (isNaN(parsedAmount) || parsedAmount <= 0) throw new Error('Invalid amount');
@@ -160,13 +157,13 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
         .setTimeout(60)
         .build();
 
-      setTxStatus({ type: 'loading', message: `Simulating ${method} on RPC...` });
+      setTxStatus({ type: 'loading', message: t.vaultSimulating });
       const simResult = await rpcServer.simulateTransaction(transaction) as any;
 
       if (simResult.error) throw new Error(`Simulation failed: ${simResult.error}`);
       
       if (rpc.Api.isSimulationSuccess(simResult)) {
-        setTxStatus({ type: 'loading', message: 'Assembling and signing...' });
+        setTxStatus({ type: 'loading', message: t.vaultAssembling });
         const assembledTx = rpc.assembleTransaction(transaction, simResult) as any;
         const xdrPayload = typeof assembledTx.build === 'function' ? assembledTx.build().toXDR() : assembledTx.toXDR();
 
@@ -178,7 +175,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
         if (!signedTxXdr) throw new Error('Transaction rejected by user.');
 
         const signedTx = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
-        setTxStatus({ type: 'loading', message: 'Submitting to network...' });
+        setTxStatus({ type: 'loading', message: t.vaultSubmitting });
         
         const response = await rpcServer.sendTransaction(signedTx);
         if (response.status === 'ERROR') {
@@ -186,7 +183,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
             throw new Error(`Submission error: ${resErr}`);
         }
 
-        setTxStatus({ type: 'loading', message: 'Waiting for consensus...' });
+        setTxStatus({ type: 'loading', message: t.vaultWaiting });
         
         let statusResponse = await rpcServer.getTransaction(response.hash);
         let attempts = 0;
@@ -200,7 +197,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
         if (statusResponse.status === 'SUCCESS') {
           setTxStatus({
             type: 'success',
-            message: `Successfully executed ${method} of ${amountStr} XLM!`,
+            message: method === 'deposit' ? t.vaultDepositSuccess : t.vaultWithdrawSuccess,
             hash: response.hash
           });
           setDepositAmount('');
@@ -224,12 +221,12 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
       
       {/* Vault Status Box */}
       <div style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '12px', padding: '1.5rem' }}>
-        <h4 style={{ margin: '0 0 0.5rem 0', color: '#a78bfa', fontSize: '0.9rem' }}>Your Vault Balance</h4>
+        <h4 style={{ margin: '0 0 0.5rem 0', color: '#a78bfa', fontSize: '0.9rem' }}>{t.vaultBalanceTitle}</h4>
         <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc' }}>
             {vaultBalance || '0.0000'} <span style={{ fontSize: '1.2rem', color: '#a78bfa' }}>XLM</span>
         </div>
         <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>
-          Contract ID: <code style={{ color: '#e2e8f0' }}>{VAULT_CONTRACT_ID.substring(0,8)}...{VAULT_CONTRACT_ID.substring(VAULT_CONTRACT_ID.length-8)}</code>
+          {t.vaultContractId}: <code style={{ color: '#e2e8f0' }}>{VAULT_CONTRACT_ID.substring(0,8)}...{VAULT_CONTRACT_ID.substring(VAULT_CONTRACT_ID.length-8)}</code>
         </p>
       </div>
 
@@ -244,7 +241,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
         {/* Deposit */}
         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px' }}>
-          <label className="form-label">Deposit XLM</label>
+          <label className="form-label">{t.vaultDeposit}</label>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input 
               type="number" 
@@ -266,7 +263,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
 
         {/* Withdraw */}
         <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px' }}>
-          <label className="form-label">Withdraw XLM</label>
+          <label className="form-label">{t.vaultWithdraw}</label>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input 
               type="number" 
@@ -291,13 +288,13 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
       <div>
         <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '1rem 0', fontSize: '1.1rem' }}>
           <Activity size={18} style={{ color: '#06b6d4' }} />
-          Live Contract Events
-          <span style={{ fontSize: '0.7rem', background: '#06b6d4', padding: '0.1rem 0.4rem', borderRadius: '4px', color: '#0b0f19' }}>STREAMING</span>
+          {t.vaultLiveEvents}
+          <span style={{ fontSize: '0.7rem', background: '#06b6d4', padding: '0.1rem 0.4rem', borderRadius: '4px', color: '#0b0f19' }}>{t.vaultStreaming}</span>
         </h4>
         
         {events.length === 0 ? (
            <div style={{ padding: '2rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', color: '#64748b' }}>
-              No recent vault events found in the last 100 ledgers.
+              {t.vaultNoEvents}
            </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>

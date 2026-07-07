@@ -36,6 +36,22 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
     setStatus({ type: 'loading', message: t.creatingInvoice });
 
     try {
+      if (walletAddress.startsWith('GDEMO')) {
+        setStatus({ type: 'loading', message: 'Simulating invoice creation in Demo Mode...' });
+        await new Promise(r => setTimeout(r, 1500));
+        const simulatedId = (Math.floor(Math.random() * 900) + 10).toString();
+        setStatus({
+          type: 'success',
+          message: t.invoiceCreatedSuccess,
+          invoiceId: simulatedId
+        });
+        setClientAddress('');
+        setAmount('');
+        setDescription('');
+        if (onInvoiceCreated) onInvoiceCreated();
+        return;
+      }
+
       if (!clientAddress.startsWith('G') || clientAddress.length !== 56)
         throw new Error('Invalid client address format.');
       const parsedAmount = parseFloat(amount);

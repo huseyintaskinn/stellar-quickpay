@@ -68,6 +68,30 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
     if (!walletAddress || escrowContractId.includes('YOUR_')) return;
     setLoading(true);
     try {
+      if (walletAddress.startsWith('GDEMO')) {
+        const mockSent: Invoice[] = [
+          { id: 1, freelancer: walletAddress, client: 'GBGHSPQEIZGJOJJDJYG5VVIPU7THJQU2Z4B6V5VF5IHUQ2SOLIRITDQS', amount: '50.0000', description: 'Website Redesign Proposal', status: 'Pending' },
+          { id: 2, freelancer: walletAddress, client: 'GAJOE3OBM5CDRG75LLO732V3ZZB5LPT6VIWBOAHCYXW57DTYOOGCLD6B', amount: '150.0000', description: 'Logo Design Delivery', status: 'Funded' },
+          { id: 3, freelancer: walletAddress, client: 'GD7UFEHE4J3RKQ25ZDGGJ4VBUWATV645UUMN4JYDIBMSFCSFOWXSQ6LM', amount: '85.0000', description: 'Smart Contract Audit', status: 'Released' }
+        ];
+        const mockReceived: Invoice[] = [
+          { id: 4, freelancer: 'GCZDX5E7RT7BTTA6VJC7YYHOYQYNHRDGEDB3O32K74VC52LC7XFCEZTH', client: walletAddress, amount: '100.0000', description: 'Content Writing Phase 1', status: 'Pending' },
+          { id: 5, freelancer: 'GC74KHZR7ASDTNQL37RDWNH3CDXW6W5BBPIJHCYQ3THFHXAHTXINKBCU', client: walletAddress, amount: '250.0000', description: 'React Mobile App Setup', status: 'Released' }
+        ];
+        setSentInvoices(mockSent);
+        setReceivedInvoices(mockReceived);
+        setUniqueTestersCount(8);
+        const earned = mockSent.filter(i => i.status === 'Released').reduce((s, i) => s + parseFloat(i.amount), 0);
+        setStats({
+          total: mockSent.length,
+          pending: mockSent.filter(i => i.status === 'Pending').length,
+          funded: mockSent.filter(i => i.status === 'Funded').length,
+          earned,
+        });
+        setLoading(false);
+        return;
+      }
+
       const dummyAccount = new (await import('@stellar/stellar-sdk')).Account(walletAddress, '1');
 
       // 1. Get total invoice count
@@ -164,6 +188,29 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
     const actionKey = action === 'cancel_invoice' ? 'cancel' : 'release';
     setActionStatus({ id, action: actionKey, loading: true, error: null });
     try {
+      if (walletAddress.startsWith('GDEMO')) {
+        await new Promise(r => setTimeout(r, 1000));
+        setActionStatus({ id: null, action: null, loading: false, error: null });
+        
+        const updateStatus = (list: Invoice[]): Invoice[] =>
+          list.map(inv => inv.id === id ? { ...inv, status: action === 'cancel_invoice' ? 'Cancelled' : 'Released' } : inv);
+        
+        setSentInvoices(prev => {
+          const updated = updateStatus(prev);
+          const earned = updated.filter(i => i.status === 'Released').reduce((s, i) => s + parseFloat(i.amount), 0);
+          setStats({
+            total: updated.length,
+            pending: updated.filter(i => i.status === 'Pending').length,
+            funded: updated.filter(i => i.status === 'Funded').length,
+            earned,
+          });
+          return updated;
+        });
+        setReceivedInvoices(prev => updateStatus(prev));
+        if (onSuccess) onSuccess();
+        return;
+      }
+
       const sourceAccount = await server.loadAccount(walletAddress);
       const invokeOp = Operation.invokeContractFunction({
         contract: escrowContractId,

@@ -27,12 +27,9 @@ import {
   ExternalLink,
   Copy,
   PlusCircle,
-  ArrowUpRight,
-  ArrowDownLeft,
   Info,
   LogOut,
   Cpu,
-  Layers,
   FileText,
   CreditCard,
   LayoutDashboard,
@@ -93,7 +90,6 @@ function App() {
   // Soroban Contract State
   const contractId = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
   const [contractSymbol, setContractSymbol] = useState<string | null>(null);
-  const [contractDecimals, setContractDecimals] = useState<number | null>(null);
   const [contractBalance, setContractBalance] = useState<string | null>(null);
   const [loadingContract, setLoadingContract] = useState(false);
 
@@ -106,7 +102,6 @@ function App() {
 
   // History State
   const [history, setHistory] = useState<PaymentTx[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
 
   // Search History State (Local Storage Caching)
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
@@ -176,25 +171,7 @@ function App() {
         setContractSymbol(scValToNative(symbolRes.result.retval).toString());
       }
 
-      // 2. Query decimals()
-      const decimalsTx = new TransactionBuilder(sourceAccount, {
-        fee: '100',
-        networkPassphrase: Networks.TESTNET
-      })
-        .addOperation(
-          Operation.invokeContractFunction({
-            contract: contractId,
-            function: 'decimals',
-            args: []
-          })
-        )
-        .setTimeout(30)
-        .build();
 
-      const decimalsRes = await rpcServer.simulateTransaction(decimalsTx) as any;
-      if (decimalsRes.result && decimalsRes.result.retval) {
-        setContractDecimals(Number(scValToNative(decimalsRes.result.retval)));
-      }
 
       // 3. Query balance(Address)
       const balanceTx = new TransactionBuilder(sourceAccount, {
@@ -257,7 +234,6 @@ function App() {
 
   // Fetch recent payments history
   const fetchTxHistory = async (address: string) => {
-    setLoadingHistory(true);
     try {
       const response = await fetch(`${HORIZON_URL}/accounts/${address}/payments?limit=8&order=desc`);
       if (response.ok) {
@@ -288,13 +264,25 @@ function App() {
       }
     } catch (err) {
       console.error('Error fetching history:', err);
-    } finally {
-      setLoadingHistory(false);
     }
   };
 
+  const [isDemoActive, setIsDemoActive] = useState(false);
+
   // Helper to load all account metrics
   const loadAllData = async (address: string) => {
+    if (address.startsWith('GDEMO')) {
+      setBalance('750.5000');
+      setContractBalance('85.0000');
+      setContractSymbol('XLM');
+      setIsAccountActivated(true);
+      setHistory([
+        { id: '1', type: 'payment', from: address, to: 'GBGHSPQEIZGJOJJDJYG5VVIPU7THJQU2Z4B6V5VF5IHUQ2SOLIRITDQS', amount: '120.0000', transaction_hash: 'abc123demo1', created_at: new Date().toISOString() },
+        { id: '2', type: 'Contract Call', from: address, to: ESCROW_CONTRACT_ID, amount: 'Soroban Tx', transaction_hash: 'abc123demo2', created_at: new Date(Date.now() - 3600000).toISOString() },
+        { id: '3', type: 'payment', from: 'GBGHSPQEIZGJOJJDJYG5VVIPU7THJQU2Z4B6V5VF5IHUQ2SOLIRITDQS', to: address, amount: '500.0000', transaction_hash: 'abc123demo3', created_at: new Date(Date.now() - 86400000).toISOString() }
+      ]);
+      return;
+    }
     await Promise.all([
       fetchBalance(address),
       fetchTxHistory(address),
@@ -334,6 +322,20 @@ function App() {
     }
   };
 
+  // Activate Demo Mode (Simulated Wallet)
+  const activateDemoMode = async () => {
+    const demoAddr = 'GDEMO55TESTNETUSERPAYMENTSFORFREELANCERS12345';
+    setWalletAddress(demoAddr);
+    setIsDemoActive(true);
+    await loadAllData(demoAddr);
+  };
+
+  // Exit Demo Mode
+  const exitDemoMode = () => {
+    setIsDemoActive(false);
+    disconnectWallet();
+  };
+
   // Disconnect Wallet
   const disconnectWallet = async () => {
     try {
@@ -346,12 +348,12 @@ function App() {
     setHistory([]);
     setIsAccountActivated(true);
     setContractSymbol(null);
-    setContractDecimals(null);
     setContractBalance(null);
     setTxStatus({ type: 'idle', message: '' });
     setRecipient('');
     setAmount('');
     setMemo('');
+    setIsDemoActive(false);
   };
 
   // Fund Wallet with Friendbot Faucet
@@ -504,15 +506,7 @@ function App() {
     return `${addr.slice(0, 6)}...${addr.slice(-6)}`;
   };
 
-  // Format timestamp
-  const formatDate = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString();
-    } catch {
-      return dateStr;
-    }
-  };
+
 
   // Add search history caching helper
   const handleSearchLookup = (id: string) => {
@@ -560,6 +554,14 @@ function App() {
 
   return (
     <div className="app-container">
+      {isDemoActive && (
+        <div className="demo-banner">
+          <span>⚙️ {t.demoModeActive}</span>
+          <button className="btn btn-secondary" onClick={exitDemoMode} style={{ padding: '0.2rem 0.5rem', fontSize: '0.65rem', color: '#fff', border: '1px solid #fff' }}>
+            {t.demoModeExit}
+          </button>
+        </div>
+      )}
 
       {/* ── TOP NAVBAR ── */}
       <nav className="navbar">
@@ -695,6 +697,9 @@ function App() {
               <button className="btn btn-accent" onClick={connectWallet} disabled={isConnecting} style={{ padding: '0.85rem 2rem', fontSize: '0.95rem' }}>
                 {isConnecting ? <><RefreshCw size={16} className="spinner" /> Connecting...</> : <><Wallet size={16} /> {t.connectBtn}</>}
               </button>
+              <button className="btn btn-secondary" onClick={activateDemoMode} disabled={isConnecting} style={{ padding: '0.85rem 1.75rem', fontSize: '0.95rem', borderColor: 'var(--accent)', color: 'var(--accent)' }}>
+                <Award size={16} /> {t.demoModeBtn}
+              </button>
               <a href="https://stellar.org" target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '0.85rem 1.75rem', fontSize: '0.95rem', textDecoration: 'none' }}>
                 Learn about Stellar <ExternalLink size={14} />
               </a>
@@ -751,26 +756,42 @@ function App() {
                     {/* Trust Badges */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{t.badgesTitle}</span>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                         
-                        <div className={`sticker-badge ${isPioneerUnlocked ? 'unlocked' : 'locked'}`} title={t.stellarPioneerDesc}>
-                          <span style={{ fontSize: '1.2rem', marginBottom: '0.2rem' }}>🚀</span>
-                          <span style={{ fontSize: '0.68rem', fontWeight: 800 }}>{t.stellarPioneer}</span>
+                        <div className={`trust-badge-card ${isPioneerUnlocked ? 'unlocked' : 'locked'}`}>
+                          <div className="trust-badge-icon-wrapper">🚀</div>
+                          <div className="trust-badge-info">
+                            <span className="trust-badge-name">{t.stellarPioneer}</span>
+                            <span className="trust-badge-desc">{t.stellarPioneerDesc}</span>
+                          </div>
+                          <span className="trust-badge-status">{isPioneerUnlocked ? 'Unlocked' : 'Locked'}</span>
                         </div>
 
-                        <div className={`sticker-badge ${isDelivererUnlocked ? 'unlocked' : 'locked'}`} title={t.fastDelivererDesc}>
-                          <span style={{ fontSize: '1.2rem', marginBottom: '0.2rem' }}>⚡</span>
-                          <span style={{ fontSize: '0.68rem', fontWeight: 800 }}>{t.fastDeliverer}</span>
+                        <div className={`trust-badge-card ${isDelivererUnlocked ? 'unlocked' : 'locked'}`}>
+                          <div className="trust-badge-icon-wrapper">⚡</div>
+                          <div className="trust-badge-info">
+                            <span className="trust-badge-name">{t.fastDeliverer}</span>
+                            <span className="trust-badge-desc">{t.fastDelivererDesc}</span>
+                          </div>
+                          <span className="trust-badge-status">{isDelivererUnlocked ? 'Unlocked' : 'Locked'}</span>
                         </div>
 
-                        <div className={`sticker-badge ${isTrustAnchorUnlocked ? 'unlocked' : 'locked'}`} title={t.trustAnchorDesc}>
-                          <span style={{ fontSize: '1.2rem', marginBottom: '0.2rem' }}>🛡️</span>
-                          <span style={{ fontSize: '0.68rem', fontWeight: 800 }}>{t.trustAnchor}</span>
+                        <div className={`trust-badge-card ${isTrustAnchorUnlocked ? 'unlocked' : 'locked'}`}>
+                          <div className="trust-badge-icon-wrapper">🛡️</div>
+                          <div className="trust-badge-info">
+                            <span className="trust-badge-name">{t.trustAnchor}</span>
+                            <span className="trust-badge-desc">{t.trustAnchorDesc}</span>
+                          </div>
+                          <span className="trust-badge-status">{isTrustAnchorUnlocked ? 'Unlocked' : 'Locked'}</span>
                         </div>
 
-                        <div className={`sticker-badge ${isVolumeUnlocked ? 'unlocked' : 'locked'}`} title={t.highVolumeDesc}>
-                          <span style={{ fontSize: '1.2rem', marginBottom: '0.2rem' }}>💎</span>
-                          <span style={{ fontSize: '0.68rem', fontWeight: 800 }}>{t.highVolume}</span>
+                        <div className={`trust-badge-card ${isVolumeUnlocked ? 'unlocked' : 'locked'}`}>
+                          <div className="trust-badge-icon-wrapper">💎</div>
+                          <div className="trust-badge-info">
+                            <span className="trust-badge-name">{t.highVolume}</span>
+                            <span className="trust-badge-desc">{t.highVolumeDesc}</span>
+                          </div>
+                          <span className="trust-badge-status">{isVolumeUnlocked ? 'Unlocked' : 'Locked'}</span>
                         </div>
 
                       </div>
@@ -907,7 +928,7 @@ function App() {
                     rpcServer={rpcServer}
                     server={server}
                     escrowContractId={ESCROW_CONTRACT_ID}
-                    onSuccess={(id) => {
+                    onSuccess={(id: string) => {
                       loadAllData(walletAddress!);
                       handleSearchLookup(id);
                     }}
@@ -948,30 +969,30 @@ function App() {
             {activeTab === 'advanced' && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
                 
-                {/* Classic Horizon Send */}
-                <div className="card">
+                 {/* Classic Horizon Send */}
+                 <div className="card">
                   <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Send size={16} /> Send Classic Payment
+                    <Send size={16} /> {t.sendClassicPayment}
                   </h3>
                   <form onSubmit={handleSendPayment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div className="form-group">
-                      <label className="form-label" htmlFor="recipient">Recipient Address</label>
+                      <label className="form-label" htmlFor="recipient">{t.recipientAddress}</label>
                       <input id="recipient" type="text" className="form-input" placeholder="G..."
                         value={recipient} onChange={(e) => setRecipient(e.target.value.trim())} required />
                     </div>
                     <div className="form-group">
-                      <label className="form-label" htmlFor="amount">Amount (XLM)</label>
+                      <label className="form-label" htmlFor="amount">{t.amountXlm}</label>
                       <input id="amount" type="number" step="any" min="0.0000001" className="form-input" placeholder="0.0"
                         value={amount} onChange={(e) => setAmount(e.target.value)} required />
                     </div>
                     <div className="form-group">
-                      <label className="form-label" htmlFor="memo">Memo (Optional)</label>
+                      <label className="form-label" htmlFor="memo">{t.memoOptional}</label>
                       <input id="memo" type="text" maxLength={28} className="form-input" placeholder="e.g. Invoice #42"
                         value={memo} onChange={(e) => setMemo(e.target.value)} />
                     </div>
                     <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}
                       disabled={txStatus.type === 'loading' || !recipient || !amount}>
-                      <Send size={15} /> Send Transaction
+                      <Send size={15} /> {t.sendTransactionBtn}
                     </button>
                   </form>
                 </div>
@@ -979,13 +1000,14 @@ function App() {
                 {/* Soroban Vault */}
                 <div className="card">
                   <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Cpu size={16} /> Advanced Vault Dashboard
+                    <Cpu size={16} /> {t.advancedVaultTitle}
                   </h3>
                   <VaultDashboard
                     walletAddress={walletAddress}
                     rpcServer={rpcServer}
                     server={server}
                     onSuccess={() => loadAllData(walletAddress)}
+                    t={t}
                   />
                 </div>
 
