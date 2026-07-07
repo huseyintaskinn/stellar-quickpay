@@ -44,25 +44,25 @@ jobs:
       - name: Run Vault Contract Tests
         working-directory: ./contracts/vault
         run: |
-          cargo update -p ed25519-dalek --precise 2.1.1
+          cargo update -p ed25519-dalek@3.0.0 --precise 2.1.1 || true
           cargo test
 
       - name: Run Escrow Contract Tests
         working-directory: ./contracts/escrow
         run: |
-          cargo update -p ed25519-dalek --precise 2.1.1
+          cargo update -p ed25519-dalek@3.0.0 --precise 2.1.1 || true
           cargo test
 
       - name: Build Vault Contract
         working-directory: ./contracts/vault
         run: |
-          cargo update -p ed25519-dalek --precise 2.1.1
+          cargo update -p ed25519-dalek@3.0.0 --precise 2.1.1 || true
           stellar contract build
 
       - name: Build Escrow Contract
         working-directory: ./contracts/escrow
         run: |
-          cargo update -p ed25519-dalek --precise 2.1.1
+          cargo update -p ed25519-dalek@3.0.0 --precise 2.1.1 || true
           stellar contract build
 
       - name: Deploy Contracts to Testnet
