@@ -35,9 +35,7 @@ import {
   LayoutDashboard,
   Menu,
   X,
-  Home,
-  Award,
-  Trophy
+  Home
 } from 'lucide-react';
 import { VaultDashboard } from './VaultDashboard';
 import { InvoiceCreator } from './components/InvoiceCreator';
@@ -60,6 +58,29 @@ interface LeaderboardEntry {
   completed: number;
 }
 
+const getLocalizedError = (errMsg: string, lang: 'en' | 'tr'): string => {
+  const lower = errMsg.toLowerCase();
+  if (lower.includes('underfunded') || lower.includes('insufficient')) {
+    return lang === 'en' ? 'Insufficient funds in wallet.' : 'Cüzdanda yetersiz bakiye.';
+  }
+  if (lower.includes('no_destination') || lower.includes('not active') || lower.includes('inactive')) {
+    return lang === 'en' ? 'Destination account is inactive. Please fund it first.' : 'Alıcı hesabı aktif değil. Lütfen önce fonlayın.';
+  }
+  if (lower.includes('rejected') || lower.includes('user declined') || lower.includes('cancel')) {
+    return lang === 'en' ? 'Transaction canceled by user.' : 'İşlem kullanıcı tarafından iptal edildi.';
+  }
+  if (lower.includes('client mismatch')) {
+    return lang === 'en' ? 'Client mismatch: Switch to the correct client wallet.' : 'Müşteri uyuşmazlığı: Doğru müşteri cüzdanına geçin.';
+  }
+  if (lower.includes('not found') || lower.includes('404')) {
+    return lang === 'en' ? 'Invoice not found.' : 'Fatura bulunamadı.';
+  }
+  if (lower.includes('already paid') || lower.includes('payment locked')) {
+    return lang === 'en' ? 'Payment already funded or locked.' : 'Ödeme zaten kilitlenmiş veya ödenmiş.';
+  }
+  return lang === 'en' ? 'Transaction failed. Please try again.' : 'İşlem başarısız oldu. Lütfen tekrar deneyin.';
+};
+
 function App() {
   const [lang, setLang] = useState<'en' | 'tr'>('en');
   const t = translations[lang];
@@ -76,6 +97,7 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'create-invoice' | 'pay-invoice' | 'advanced'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [demoStep, setDemoStep] = useState(0);
 
   // StellarPay Escrow Contract
   const ESCROW_CONTRACT_ID = 'CDREZXFNVSVQZLFJG4U3XBPA2CVYH2GJNK3MADHJFNHZTXETLEAFF5SK';
@@ -337,7 +359,7 @@ function App() {
       console.error('Connection error:', err);
       setTxStatus({
         type: 'error',
-        message: err.message || 'Connection request rejected.'
+        message: getLocalizedError(err.message || 'Connection request rejected.', lang)
       });
     } finally {
       setIsConnecting(false);
@@ -400,7 +422,7 @@ function App() {
       console.error('Faucet error:', err);
       setTxStatus({
         type: 'error',
-        message: `Faucet failed: ${err.message || err.toString()}`
+        message: getLocalizedError(err.message || err.toString(), lang)
       });
     } finally {
       setIsFunding(false);
@@ -491,25 +513,14 @@ function App() {
     } catch (err: any) {
       console.error('Payment execution failed:', err);
       let errorMsg = err.message || err.toString();
-      
-      if (err.response && err.response.data && err.response.data.extras && err.response.data.extras.result_codes) {
-        const codes = err.response.data.extras.result_codes;
-        if (codes.operations && codes.operations.length > 0) {
-          const opCode = codes.operations[0];
-          if (opCode === 'op_no_destination') {
-            errorMsg = 'Destination account does not exist. You must send at least 1 XLM to fund and create this account on-chain.';
-          } else if (opCode === 'op_underfunded') {
-            errorMsg = 'Your account has insufficient funds to cover this payment amount and base fee.';
-          } else {
-            errorMsg = `Operation failed with code: ${opCode}`;
-          }
-        } else if (codes.transaction) {
-          errorMsg = `Transaction rejected by network with code: ${codes.transaction}`;
-        }
+      if (err.response?.data?.extras?.result_codes?.operations?.[0]) {
+        errorMsg = err.response.data.extras.result_codes.operations[0];
+      } else if (err.response?.data?.extras?.result_codes?.transaction) {
+        errorMsg = err.response.data.extras.result_codes.transaction;
       }
       setTxStatus({
         type: 'error',
-        message: errorMsg
+        message: getLocalizedError(errorMsg, lang)
       });
     }
   };
@@ -579,10 +590,13 @@ function App() {
       <div className="cursor-trail" style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px` }} />
 
       {isDemoActive && (
-        <div className="demo-banner">
-          <span>⚙️ {t.demoModeActive}</span>
-          <button className="btn btn-secondary" onClick={exitDemoMode} style={{ padding: '0.2rem 0.5rem', fontSize: '0.65rem', color: '#fff', border: '1px solid #fff' }}>
-            {t.demoModeExit}
+        <div className="demo-banner" style={{ background: 'rgba(245, 197, 24, 0.08)', borderColor: 'rgba(245, 197, 24, 0.2)', color: 'var(--accent)', padding: '0.6rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', zIndex: 1001, borderBottom: '1px solid rgba(245, 197, 24, 0.15)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--accent)' }}>play_circle</span>
+            <span>{t.demoModeActive}</span>
+          </div>
+          <button className="btn btn-accent" onClick={exitDemoMode} style={{ padding: '0.35rem 0.75rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>logout</span> {t.demoModeExit}
           </button>
         </div>
       )}
@@ -702,15 +716,15 @@ function App() {
             <button className="btn btn-accent" onClick={() => { connectWallet(); setMobileMenuOpen(false); }} style={{ width: '100%' }}>
               <Wallet size={14} /> {t.connectBtn}
             </button>
-            <button className="btn btn-secondary" onClick={() => { activateDemoMode(); setMobileMenuOpen(false); }} style={{ width: '100%', borderColor: 'var(--accent)', color: 'var(--accent)' }}>
-              <Award size={14} /> {t.demoModeBtn}
+            <button className="btn btn-secondary" onClick={() => { activateDemoMode(); setMobileMenuOpen(false); }} style={{ width: '100%', borderColor: 'var(--accent)', color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>play_circle</span> {t.demoModeBtn}
             </button>
           </div>
         )}
         <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0.75rem 0' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button onClick={() => setLang(lang === 'en' ? 'tr' : 'en')} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>
-            🌐 {lang === 'en' ? 'Türkçe' : 'English'}
+          <button onClick={() => setLang(lang === 'en' ? 'tr' : 'en')} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>language</span> {lang === 'en' ? 'Türkçe' : 'English'}
           </button>
           <a href="https://forms.gle/DMxtyMvZkgKaEYE59" target="_blank" rel="noreferrer" className="navbar-link"
             style={{ textDecoration: 'none', color: 'var(--accent-emerald)', padding: '0.4rem' }}>
@@ -763,8 +777,8 @@ function App() {
               <button className="btn btn-accent" onClick={connectWallet} disabled={isConnecting} style={{ padding: '0.85rem 2rem', fontSize: '0.95rem' }}>
                 {isConnecting ? <><RefreshCw size={16} className="spinner" /> Connecting...</> : <><Wallet size={16} /> {t.connectBtn}</>}
               </button>
-              <button className="btn btn-secondary" onClick={activateDemoMode} disabled={isConnecting} style={{ padding: '0.85rem 1.75rem', fontSize: '0.95rem', borderColor: 'var(--accent)', color: 'var(--accent)' }}>
-                <Award size={16} /> {t.demoModeBtn}
+              <button className="btn btn-secondary" onClick={activateDemoMode} disabled={isConnecting} style={{ padding: '0.85rem 1.75rem', fontSize: '0.95rem', borderColor: 'var(--accent)', color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>play_circle</span> {t.demoModeBtn}
               </button>
               <a href="https://stellar.org" target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '0.85rem 1.75rem', fontSize: '0.95rem', textDecoration: 'none' }}>
                 {t.learnAboutStellar} <ExternalLink size={14} />
@@ -784,6 +798,69 @@ function App() {
         ) : (
           /* ── AUTHENTICATED WORKSPACE ── */
           <>
+            {/* Tutorial */}
+            {isDemoActive && (
+              <div className="card" style={{ marginBottom: '2rem', background: 'rgba(245, 197, 24, 0.02)', borderColor: 'rgba(245, 197, 24, 0.15)', padding: '1.25rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', borderRadius: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '20px' }}>school</span>
+                    <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800 }}>{t.tutorialTitle} ({demoStep + 1} / 4)</h4>
+                  </div>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Interactive Guide</span>
+                </div>
+                
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
+                  {demoStep === 0 && t.tutorialStep1}
+                  {demoStep === 1 && t.tutorialStep2}
+                  {demoStep === 2 && t.tutorialStep3}
+                  {demoStep === 3 && t.tutorialStep4}
+                </p>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
+                  <button 
+                    className="btn btn-secondary" 
+                    onClick={() => setDemoStep(s => Math.max(0, s - 1))} 
+                    disabled={demoStep === 0}
+                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem' }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>arrow_back</span> {t.backBtn}
+                  </button>
+                  
+                  <div style={{ display: 'flex', gap: '0.35rem' }}>
+                    {[0, 1, 2, 3].map((idx) => (
+                      <span 
+                        key={idx} 
+                        style={{ 
+                          width: '6px', 
+                          height: '6px', 
+                          borderRadius: '50%', 
+                          background: demoStep === idx ? 'var(--accent)' : 'rgba(255,255,255,0.12)',
+                          transition: 'background 0.2s' 
+                        }} 
+                      />
+                    ))}
+                  </div>
+
+                  {demoStep < 3 ? (
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={() => setDemoStep(s => s + 1)}
+                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem', background: 'var(--accent)', color: '#000', borderColor: 'var(--accent)' }}
+                    >
+                      {t.nextBtn} <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>arrow_forward</span>
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn btn-primary" 
+                      onClick={() => setDemoStep(0)}
+                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem', background: 'var(--accent)', color: '#000', borderColor: 'var(--accent)' }}
+                    >
+                      Restart <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>replay</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
             {/* PAGE 1: OVERVIEW & TRUST PROFILE */}
             {activeTab === 'overview' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -804,14 +881,14 @@ function App() {
                   
                   {/* Freelancer Trust Profile & Badges */}
                   <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                    <span className="card-title-mono"><Award size={14} /> {t.trustProfileTitle}</span>
+                    <span className="card-title-mono" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '18px' }}>verified_user</span> {t.trustProfileTitle}</span>
                     
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                       <div style={{ borderLeft: '3px solid var(--accent)', paddingLeft: '0.75rem' }}>
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>{t.totalVolume}</span>
                         <div style={{ fontSize: '1.3rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{userVolume.toFixed(2)} XLM</div>
                       </div>
-                      <div style={{ borderLeft: '3px solid var(--accent-purple)', paddingLeft: '0.75rem' }}>
+                      <div style={{ borderLeft: '3px solid var(--accent)', opacity: 0.8, paddingLeft: '0.75rem' }}>
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>{t.successfulProjects}</span>
                         <div style={{ fontSize: '1.3rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{userCompletedCount}</div>
                       </div>
@@ -828,12 +905,7 @@ function App() {
                         <div className={`github-badge-container ${isPioneerUnlocked ? 'unlocked' : 'locked'}`} title={t.stellarPioneerDesc}>
                           <div className="github-badge-circle">
                             <div className="github-badge-icon">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
-                                <path d="M12 2C6.5 2 2 6.5 2 12c0 1.2 .2 2.4 .7 3.5L11 7l5.5 5.5-8.5 8.3c1.1 .5 2.3 .7 3.5 .7 5.5 0 10-4.5 10-10C22 6.5 17.5 2 12 2z" />
-                                <path d="M9 15l-4 4" />
-                                <path d="M15 9l4-4" />
-                              </svg>
+                              <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>rocket_launch</span>
                             </div>
                             {isPioneerUnlocked && <span className="github-badge-multiplier">x1</span>}
                           </div>
@@ -846,9 +918,7 @@ function App() {
                         <div className={`github-badge-container ${isDelivererUnlocked ? 'unlocked' : 'locked'}`} title={t.fastDelivererDesc}>
                           <div className="github-badge-circle">
                             <div className="github-badge-icon">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                              </svg>
+                              <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>bolt</span>
                             </div>
                             {isDelivererUnlocked && <span className="github-badge-multiplier">x1</span>}
                           </div>
@@ -861,9 +931,7 @@ function App() {
                         <div className={`github-badge-container ${isTrustAnchorUnlocked ? 'unlocked' : 'locked'}`} title={t.trustAnchorDesc}>
                           <div className="github-badge-circle">
                             <div className="github-badge-icon">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                              </svg>
+                              <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>shield</span>
                             </div>
                             {isTrustAnchorUnlocked && <span className="github-badge-multiplier">x1</span>}
                           </div>
@@ -876,12 +944,7 @@ function App() {
                         <div className={`github-badge-container ${isVolumeUnlocked ? 'unlocked' : 'locked'}`} title={t.highVolumeDesc}>
                           <div className="github-badge-circle">
                             <div className="github-badge-icon">
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M6 3h12l4 6-10 13L2 9z" />
-                                <path d="M11 3 8 9l3 13" />
-                                <path d="M13 3l3 9-3 10" />
-                                <path d="M2 9h20" />
-                              </svg>
+                              <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>diamond</span>
                             </div>
                             {isVolumeUnlocked && <span className="github-badge-multiplier">x1</span>}
                           </div>
@@ -897,7 +960,7 @@ function App() {
 
                   {/* Leaderboard (Active User Competition) */}
                   <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <span className="card-title-mono"><Trophy size={14} style={{ color: 'var(--accent)' }} /> {t.leaderboardTitle}</span>
+                    <span className="card-title-mono" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}><span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '18px' }}>workspace_premium</span> {t.leaderboardTitle}</span>
                     
                     <div className="custom-table-container" style={{ border: 'none' }}>
                       <table className="custom-table">
@@ -1106,6 +1169,7 @@ function App() {
                     server={server}
                     onSuccess={() => loadAllData(walletAddress)}
                     t={t}
+                    lang={lang}
                   />
                 </div>
 

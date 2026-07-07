@@ -25,7 +25,7 @@ export const translations = {
     step2Desc: "Go to the Create Invoice tab, type a description, amount, and the client's public address (you can use your own address to test with yourself!).",
     step3Title: "3. Pay & Release",
     step3Desc: "The client searches the invoice ID under the Pay Invoice tab and pays. Once paid, the freelancer clicks Release Payment under My Invoices to withdraw!",
-    feedbackBtn: "Share Feedback 💬",
+    feedbackBtn: "Share Feedback",
     // Table
     direction: "Direction",
     amount: "Amount",
@@ -139,7 +139,16 @@ export const translations = {
     accountInactive: "Account Inactive",
     accountInactiveDesc: "Your wallet is inactive on testnet. Requesting faucet XLM activates it.",
     requestFaucetBtn: "Request Faucet XLM",
-    learnAboutStellar: "Learn about Stellar"
+    learnAboutStellar: "Learn about Stellar",
+    
+    // Tutorial
+    tutorialTitle: "StellarPay Interactive Tutorial",
+    tutorialStep1: "Step 1: Welcome! You are in Demo Mode. Your wallet is simulated as GDEMO... Check out your Dashboard tab below to see your Trust Profile, badges, and the leaderboards.",
+    tutorialStep2: "Step 2: Let's create an invoice. Go to the Create Invoice tab, enter GDEMO... as client, enter an amount, and click Create Invoice. A smart contract invoice will be generated.",
+    tutorialStep3: "Step 3: Pay the invoice. Copy the Invoice ID from the success message, go to the Pay Invoice tab, paste the ID, and click Pay. The funds will be locked securely on-chain.",
+    tutorialStep4: "Step 4: Claim your funds. Go to My Invoices, select Sent Invoices, and click Release Payment. The funds will transfer to your balance and your successful escrow count increases!",
+    backBtn: "Back",
+    nextBtn: "Next"
   },
   tr: {
     // App.tsx
@@ -167,7 +176,7 @@ export const translations = {
     step2Desc: "Fatura Oluştur sekmesine gidin, açıklama, tutar ve müşterinin cüzdan adresini yazın (kendinizle test etmek için kendi adresinizi yazabilirsiniz!).",
     step3Title: "3. Öde ve Serbest Bırak",
     step3Desc: "Müşteri, Fatura Öde sekmesinde fatura ID'sini aratıp öder. Ödeme yapıldıktan sonra freelancer, çekim yapmak için Faturalarım altından Ödemeyi Al'a tıklar!",
-    feedbackBtn: "Geri Bildirim Paylaş 💬",
+    feedbackBtn: "Geri Bildirim Paylaş",
     // Table
     direction: "Yön",
     amount: "Tutar",
@@ -281,6 +290,15 @@ export const translations = {
     accountInactive: "Hesap Aktif Değil",
     accountInactiveDesc: "Cüzdanınız testnet üzerinde aktif değil. Musluktan XLM talep ederek aktif edebilirsiniz.",
     requestFaucetBtn: "Faucet XLM Talep Et",
-    learnAboutStellar: "Stellar Hakkında Bilgi Al"
+    learnAboutStellar: "Stellar Hakkında Bilgi Al",
+    
+    // Tutorial
+    tutorialTitle: "StellarPay İnteraktif Eğitim",
+    tutorialStep1: "1. Adım: Hoş geldiniz! Canlı demo modundasınız. Cüzdanınız GDEMO... olarak simüle edildi. Güven profilinizi, rozetlerinizi ve liderlik tablosunu görmek için aşağıdaki Kontrol Paneli sekmesini inceleyin.",
+    tutorialStep2: "2. Adım: Şimdi bir fatura oluşturun. Fatura Oluştur sekmesine gidin, alıcı kısmına GDEMO... yazın, bir tutar girin ve Fatura Oluştur'a basın. Akıllı sözleşme faturası oluşturulacaktır.",
+    tutorialStep3: "3. Adım: Faturayı ödeyin. Başarı mesajındaki Fatura ID'sini kopyalayın, Fatura Öde sekmeşine geçip ID'yi yapıştırın ve Öde'ye basın. Fonlar zincir üzerinde güvenle kilitlenecektir.",
+    tutorialStep4: "4. Adım: Fonları cüzdanınıza çekin. Faturalarım sekmesine gidin, Gönderilen Faturalar'ı seçin ve Ödemeyi Al'a tıklayın. Fonlar bakiyenize aktarılacak ve emanet sayınız artacaktır!",
+    backBtn: "Geri",
+    nextBtn: "İleri"
   }
 };

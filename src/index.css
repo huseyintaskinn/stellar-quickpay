@@ -6,14 +6,11 @@
   --bg-dots:       rgba(255, 255, 255, 0.007);
   --surface:       rgba(255, 255, 255, 0.015);
   --surface-solid: #08090f;
-  --border:        rgba(255, 255, 255, 0.08);
-  --border-hover:  rgba(255, 255, 255, 0.16);
+  --border:        rgba(255, 255, 255, 0.07);
+  --border-hover:  rgba(255, 255, 255, 0.15);
   
-  /* Color Palette */
-  --accent:        #F5C518; /* Gold Accent */
-  --accent-purple: #8b5cf6; /* Cyber Purple */
-  --accent-emerald:#10b981; /* Neon Emerald */
-  --accent-cyan:   #06b6d4; /* Electric Cyan */
+  /* Monochrome Gold Accent Theme */
+  --accent:        #F5C518;
   
   --text-primary:  #FFFFFF;
   --text-secondary:#94a3b8;
@@ -35,10 +32,9 @@
 }
 
 html, body {
-  cursor: none !important; /* Hide default cursor */
+  cursor: none !important;
 }
 
-/* Interactive elements cursor override */
 a, button, select, input, textarea, [role="button"], tr {
   cursor: none !important;
 }
@@ -58,6 +54,24 @@ body {
   background-position: 0 0, 16px 16px;
   display: flex;
   flex-direction: column;
+}
+
+/* ─── Material Symbols Font Base Override ────────────────────── */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  vertical-align: middle;
 }
 
 /* ─── Dynamic Cursor Follower & Trail ───────────────────────── */
@@ -95,18 +109,17 @@ body {
   pointer-events: none;
   transform: translate(-50%, -50%);
   z-index: -1;
-  /* Smooth trailing transition */
   transition: left 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94), top 0.12s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* ─── Dynamic Ambient Background Spots ──────────────── */
+/* ─── Ambient Background Spots ─────────────────────────────── */
 body::before, body::after {
   content: "";
   position: fixed;
   width: 450px;
   height: 450px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(245, 197, 24, 0.02) 0%, transparent 70%);
   z-index: -2;
   pointer-events: none;
   animation: float-ambient-1 25s infinite alternate ease-in-out;
@@ -151,6 +164,7 @@ h1, h2, h3, h4 {
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--text-primary);
+  line-height: 1.25;
 }
 
 code, pre {
@@ -172,7 +186,7 @@ code, pre {
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  margin-top: 85px; /* Offset for navbar */
+  margin-top: 85px;
   box-sizing: border-box;
 }
 
@@ -206,7 +220,7 @@ code, pre {
   width: 32px;
   height: 32px;
   background: #000;
-  border: 1px solid var(--accent);
+  border: 1.5px solid var(--accent);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -277,11 +291,9 @@ code, pre {
   .desktop-only {
     display: none !important;
   }
-  
   .navbar-nav {
     display: none !important;
   }
-  
   .navbar-burger {
     display: flex !important;
   }
@@ -304,8 +316,8 @@ code, pre {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--accent-emerald);
-  box-shadow: 0 0 8px var(--accent-emerald);
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
 }
 
 .wallet-chip {
@@ -324,7 +336,8 @@ code, pre {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--accent-emerald);
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
 }
 
 .navbar-burger {
@@ -361,7 +374,7 @@ code, pre {
   display: flex;
 }
 
-/* ─── Premium Glassmorphic Cards (Redesigned) ───────────────── */
+/* ─── Premium Glassmorphic Cards ─────────────────────────────── */
 .card {
   background: var(--surface);
   backdrop-filter: blur(28px);
@@ -394,16 +407,16 @@ code, pre {
   gap: 0.45rem;
 }
 
-/* ─── Buttons ────────────────────────────────────────────────── */
+/* ─── Buttons (Thinner, Slimmer & Monochrome) ────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.7rem 1.4rem;
+  padding: 0.6rem 1.25rem;
   border-radius: var(--border-radius-md);
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid rgba(255, 255, 255, 0.08);
   font-family: var(--font-sans);
@@ -443,7 +456,7 @@ code, pre {
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.01);
+  background: rgba(255, 255, 255, 0.015);
   color: var(--text-primary);
   border-color: var(--border);
 }
@@ -453,7 +466,7 @@ code, pre {
   border-color: rgba(255, 255, 255, 0.16);
 }
 
-/* ─── Forms & Placeholders (Brighter & Readable) ─────────────── */
+/* ─── Forms & Placeholders ───────────────────────────────────── */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -491,7 +504,7 @@ code, pre {
 }
 
 .form-input::placeholder {
-  color: rgba(255, 255, 255, 0.35) !important; /* Extremely readable */
+  color: rgba(255, 255, 255, 0.35) !important;
 }
 
 /* ─── Custom Responsive Tables ────────────────────────────────── */
@@ -562,7 +575,6 @@ code, pre {
   .dashboard-stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
   .dashboard-stats-grid-3 {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -572,11 +584,9 @@ code, pre {
   .dashboard-stats-grid {
     grid-template-columns: 1fr;
   }
-  
   .dashboard-stats-grid-3 {
     grid-template-columns: 1fr;
   }
-  
   .dashboard-header-row {
     flex-direction: column;
     align-items: stretch;
@@ -584,7 +594,7 @@ code, pre {
   }
 }
 
-/* ─── Github Achievements Medallion Badges (Redesigned) ──────── */
+/* ─── Github Achievements Medallion Badges ───────────────────── */
 .github-badge-container {
   display: flex;
   flex-direction: column;
@@ -621,9 +631,9 @@ code, pre {
 }
 
 .unlocked .github-badge-circle {
-  background: linear-gradient(135deg, rgba(245, 197, 24, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+  background: linear-gradient(135deg, rgba(245, 197, 24, 0.15) 0%, rgba(245, 197, 24, 0.05) 100%);
   border-color: var(--accent);
-  box-shadow: 0 0 20px rgba(245, 197, 24, 0.3);
+  box-shadow: 0 0 20px rgba(245, 197, 24, 0.25);
 }
 
 .github-badge-icon {
@@ -636,7 +646,7 @@ code, pre {
 
 .unlocked .github-badge-icon {
   color: var(--accent);
-  filter: drop-shadow(0 0 5px rgba(245, 197, 24, 0.4));
+  filter: drop-shadow(0 0 5px rgba(245, 197, 24, 0.35));
 }
 
 .github-badge-multiplier {
@@ -695,6 +705,20 @@ code, pre {
   border-left: 4px solid #d97706 !important;
 }
 
+/* ─── Vault actions grid ───────────────────────────────────────── */
+.vault-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .vault-actions-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 /* ─── Alerts ──────────────────────────────────────────────────── */
 .alert {
   padding: 1rem 1.25rem;
@@ -703,7 +727,7 @@ code, pre {
   align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 0.85rem;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -711,21 +735,21 @@ code, pre {
 }
 
 .alert-success {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.25);
-  color: #34d399;
+  background: rgba(245, 197, 24, 0.03);
+  border-color: rgba(245, 197, 24, 0.2);
+  color: var(--accent);
 }
 
 .alert-danger {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.25);
-  color: #f87171;
+  background: rgba(255, 255, 255, 0.015);
+  border-color: rgba(245, 197, 24, 0.25);
+  color: var(--accent);
 }
 
 .alert-info {
-  background: rgba(6, 182, 212, 0.1);
-  border-color: rgba(6, 182, 212, 0.25);
-  color: #22d3ee;
+  background: rgba(245, 197, 24, 0.02);
+  border-color: rgba(245, 197, 24, 0.15);
+  color: var(--accent);
 }
 
 /* ─── Rich Footer ──────────────────────────────────────────────── */

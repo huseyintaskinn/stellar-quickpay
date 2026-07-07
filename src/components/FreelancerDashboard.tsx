@@ -4,7 +4,7 @@ import {
   Address, nativeToScVal, scValToNative
 } from '@stellar/stellar-sdk';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
-import { LayoutDashboard, RefreshCw, FileText, TrendingUp, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle2, Download } from 'lucide-react';
+import { RefreshCw, FileText, TrendingUp, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle2, Download } from 'lucide-react';
 
 interface Invoice {
   id: number; freelancer: string; client: string;
@@ -266,17 +266,18 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
     <div>
       <div className="dashboard-header-row">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <LayoutDashboard size={20} style={{ color: '#10b981' }} />
+          <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '20px' }}>dashboard</span>
           <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{t.myInvoices}</h3>
           {uniqueTestersCount > 0 && (
             <span style={{
-              fontSize: '0.7rem', fontWeight: 600, padding: '0.15rem 0.5rem', borderRadius: '12px',
+              fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.6rem', borderRadius: '12px',
               marginLeft: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
-              background: uniqueTestersCount >= 10 ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
-              color: uniqueTestersCount >= 10 ? '#34d399' : '#f59e0b',
-              border: `1px solid ${uniqueTestersCount >= 10 ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`
+              background: 'rgba(245,197,24,0.08)',
+              color: 'var(--accent)',
+              border: '1px solid rgba(245,197,24,0.2)'
             }}>
-              👥 {uniqueTestersCount} {t.activeUsersBadge} {uniqueTestersCount >= 10 ? `🎉 ${t.goalReached}` : `/ 10 ${t.testerGoal}`}
+              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>groups</span>
+              {uniqueTestersCount} {t.activeUsersBadge} {uniqueTestersCount >= 10 ? <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>celebration</span> : `/ 10 ${t.testerGoal}`}
             </span>
           )}
         </div>

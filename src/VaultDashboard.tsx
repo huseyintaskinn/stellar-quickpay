@@ -10,7 +10,7 @@ import {
   Account
 } from '@stellar/stellar-sdk';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
-import { RefreshCw, CheckCircle2, XCircle, ArrowUpCircle, ArrowDownCircle, Activity } from 'lucide-react';
+import { RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
 
 interface VaultDashboardProps {
   walletAddress: string;
@@ -18,9 +18,10 @@ interface VaultDashboardProps {
   server: any; // Horizon server
   onSuccess: () => void;
   t: any;
+  lang: 'en' | 'tr';
 }
 
-export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, rpcServer, server, onSuccess, t }) => {
+export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, rpcServer, server, onSuccess, t, lang }) => {
   const VAULT_CONTRACT_ID = 'CCPOQABR5MGO3NPRJCI75EYTW43JCKUUSR4DJLIZLWKLJFVUZY5K5GV2'; // Will be replaced by CI/CD or User
   const NATIVE_ASSET_CONTRACT_ID = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 
@@ -32,6 +33,24 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
   const [isPolling, setIsPolling] = useState(false);
 
   const [txStatus, setTxStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message: string; hash?: string }>({ type: 'idle', message: '' });
+
+  // Localized error helper
+  const getLocalizedError = (errMsg: string): string => {
+    const lower = errMsg.toLowerCase();
+    if (lower.includes('underfunded') || lower.includes('insufficient')) {
+      return lang === 'en' ? 'Insufficient funds in wallet.' : 'Cüzdanda yetersiz bakiye.';
+    }
+    if (lower.includes('no_destination') || lower.includes('not active') || lower.includes('inactive')) {
+      return lang === 'en' ? 'Destination account is inactive. Please fund it first.' : 'Alıcı hesabı aktif değil. Lütfen önce fonlayın.';
+    }
+    if (lower.includes('rejected') || lower.includes('user declined') || lower.includes('cancel')) {
+      return lang === 'en' ? 'Transaction canceled by user.' : 'İşlem kullanıcı tarafından iptal edildi.';
+    }
+    if (lower.includes('not found') || lower.includes('404')) {
+      return lang === 'en' ? 'Invoice not found.' : 'Fatura bulunamadı.';
+    }
+    return lang === 'en' ? 'Transaction failed. Please try again.' : 'İşlem başarısız oldu. Lütfen tekrar deneyin.';
+  };
 
   // Load vault balance
   const fetchVaultBalance = async () => {
@@ -159,14 +178,16 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
 
       setTxStatus({ type: 'loading', message: t.vaultSimulating });
       const simResult = await rpcServer.simulateTransaction(transaction) as any;
-
-      if (simResult.error) throw new Error(`Simulation failed: ${simResult.error}`);
       
+      if (simResult.error) {
+        throw new Error(`Simulation error: ${simResult.error}`);
+      }
+
       if (rpc.Api.isSimulationSuccess(simResult)) {
-        setTxStatus({ type: 'loading', message: t.vaultAssembling });
         const assembledTx = rpc.assembleTransaction(transaction, simResult) as any;
         const xdrPayload = typeof assembledTx.build === 'function' ? assembledTx.build().toXDR() : assembledTx.toXDR();
 
+        setTxStatus({ type: 'loading', message: t.vaultAssembling });
         const { signedTxXdr } = await StellarWalletsKit.signTransaction(xdrPayload, {
           networkPassphrase: Networks.TESTNET,
           address: walletAddress
@@ -212,7 +233,7 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
         throw new Error('Simulation failed validation.');
       }
     } catch (err: any) {
-      setTxStatus({ type: 'error', message: err.message || err.toString() });
+      setTxStatus({ type: 'error', message: getLocalizedError(err.message || err.toString()) });
     }
   };
 
@@ -220,10 +241,10 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       
       {/* Vault Status Box */}
-      <div style={{ background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.2)', borderRadius: '12px', padding: '1.5rem' }}>
-        <h4 style={{ margin: '0 0 0.5rem 0', color: '#a78bfa', fontSize: '0.9rem' }}>{t.vaultBalanceTitle}</h4>
+      <div style={{ background: 'rgba(245, 197, 24, 0.04)', border: '1px solid rgba(245, 197, 24, 0.15)', borderRadius: '16px', padding: '1.5rem' }}>
+        <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--accent)', fontSize: '0.9rem' }}>{t.vaultBalanceTitle}</h4>
         <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f8fafc' }}>
-            {vaultBalance || '0.0000'} <span style={{ fontSize: '1.2rem', color: '#a78bfa' }}>XLM</span>
+            {vaultBalance || '0.0000'} <span style={{ fontSize: '1.2rem', color: 'var(--accent)' }}>XLM</span>
         </div>
         <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>
           {t.vaultContractId}: <code style={{ color: '#e2e8f0' }}>{VAULT_CONTRACT_ID.substring(0,8)}...{VAULT_CONTRACT_ID.substring(VAULT_CONTRACT_ID.length-8)}</code>
@@ -238,9 +259,9 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
       )}
 
       {/* Action Forms */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+      <div className="vault-actions-grid">
         {/* Deposit */}
-        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px' }}>
+        <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: '1rem', borderRadius: '16px' }}>
           <label className="form-label">{t.vaultDeposit}</label>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input 
@@ -249,20 +270,21 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
               placeholder="0.0" 
               value={depositAmount} 
               onChange={e => setDepositAmount(e.target.value)} 
+              style={{ flex: 1, minWidth: 0 }}
             />
             <button 
-              className="btn" 
-              style={{ background: '#10b981', color: '#fff', padding: '0 1rem' }}
+              className="btn btn-accent" 
+              style={{ padding: '0.6rem 1.1rem' }}
               onClick={() => executeVaultCall('deposit', depositAmount)}
               disabled={txStatus.type === 'loading' || !depositAmount}
             >
-              <ArrowUpCircle size={18} />
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_upward</span>
             </button>
           </div>
         </div>
 
         {/* Withdraw */}
-        <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px' }}>
+        <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: '1rem', borderRadius: '16px' }}>
           <label className="form-label">{t.vaultWithdraw}</label>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <input 
@@ -271,14 +293,15 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
               placeholder="0.0" 
               value={withdrawAmount} 
               onChange={e => setWithdrawAmount(e.target.value)} 
+              style={{ flex: 1, minWidth: 0 }}
             />
             <button 
-              className="btn" 
-              style={{ background: '#ef4444', color: '#fff', padding: '0 1rem' }}
+              className="btn btn-secondary" 
+              style={{ padding: '0.6rem 1.1rem', borderColor: 'var(--accent)', color: 'var(--accent)' }}
               onClick={() => executeVaultCall('withdraw', withdrawAmount)}
               disabled={txStatus.type === 'loading' || !withdrawAmount}
             >
-              <ArrowDownCircle size={18} />
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_downward</span>
             </button>
           </div>
         </div>
@@ -287,28 +310,28 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
       {/* Real-time Event Streaming */}
       <div>
         <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '1rem 0', fontSize: '1.1rem' }}>
-          <Activity size={18} style={{ color: '#06b6d4' }} />
+          <span className="material-symbols-outlined" style={{ color: 'var(--accent)', marginRight: '0.3rem' }}>monitoring</span>
           {t.vaultLiveEvents}
-          <span style={{ fontSize: '0.7rem', background: '#06b6d4', padding: '0.1rem 0.4rem', borderRadius: '4px', color: '#0b0f19' }}>{t.vaultStreaming}</span>
+          <span style={{ fontSize: '0.7rem', background: 'var(--accent)', padding: '0.15rem 0.5rem', borderRadius: '6px', color: '#000', fontWeight: 800 }}>{t.vaultStreaming}</span>
         </h4>
         
         {events.length === 0 ? (
-           <div style={{ padding: '2rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '8px', color: '#64748b' }}>
+           <div style={{ padding: '2rem', textAlign: 'center', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', borderRadius: '16px', color: '#64748b' }}>
               {t.vaultNoEvents}
            </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '300px', overflowY: 'auto' }}>
             {events.map((ev, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', borderRadius: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <span style={{ 
-                    fontWeight: 700, 
+                    fontWeight: 800, 
                     fontSize: '0.8rem',
-                    color: ev.type === 'DEPOSIT' ? '#10b981' : '#ef4444' 
+                    color: 'var(--accent)' 
                   }}>
                     {ev.type}
                   </span>
-                  <span style={{ color: '#e2e8f0' }}>{ev.amount} XLM</span>
+                  <span style={{ color: '#e2e8f0', fontFamily: 'var(--font-mono)' }}>{ev.amount} XLM</span>
                 </div>
                 <span style={{ color: '#64748b', fontSize: '0.8rem' }}>Ledger: {ev.ledger}</span>
               </div>
