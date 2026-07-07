@@ -145,7 +145,7 @@ function App() {
     }
   }, []);
 
-  // Fetch contract metadata (symbol, decimals, balance)
+  // Fetch contract metadata (symbol, balance)
   const fetchContractMetadata = async (address: string) => {
     setLoadingContract(true);
     try {
@@ -171,9 +171,7 @@ function App() {
         setContractSymbol(scValToNative(symbolRes.result.retval).toString());
       }
 
-
-
-      // 3. Query balance(Address)
+      // 2. Query balance(Address)
       const balanceTx = new TransactionBuilder(sourceAccount, {
         fee: '100',
         networkPassphrase: Networks.TESTNET
@@ -506,8 +504,6 @@ function App() {
     return `${addr.slice(0, 6)}...${addr.slice(-6)}`;
   };
 
-
-
   // Add search history caching helper
   const handleSearchLookup = (id: string) => {
     if (!id) return;
@@ -596,62 +592,104 @@ function App() {
         )}
 
         <div className="navbar-right">
-          <div className="testnet-badge">
-            <span className="testnet-dot" />
-            <span>{t.testnetIndicator}</span>
-          </div>
+          {/* Desktop Controls Only */}
+          <div className="desktop-only">
+            <div className="testnet-badge">
+              <span className="testnet-dot" />
+              <span>{t.testnetIndicator}</span>
+            </div>
 
-          <button onClick={() => setLang(lang === 'en' ? 'tr' : 'en')} className="btn btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem', borderRadius: '99px' }}>
-            {lang === 'en' ? 'TR' : 'EN'}
-          </button>
+            <button onClick={() => setLang(lang === 'en' ? 'tr' : 'en')} className="btn btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem', borderRadius: '99px' }}>
+              {lang === 'en' ? 'TR' : 'EN'}
+            </button>
 
-          {walletAddress ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div className="wallet-chip">
-                <span className="wallet-dot" />
-                <code style={{ fontSize: '0.75rem' }} title={walletAddress}>{truncateAddr(walletAddress)}</code>
-                <button onClick={copyAddress} style={{ background: 'none', border: 'none', color: copied ? 'var(--accent-emerald)' : 'var(--text-muted)', cursor: 'pointer', padding: '0', display: 'flex', lineHeight: '1' }} title="Copy">
-                  <Copy size={11} />
+            {walletAddress ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className="wallet-chip">
+                  <span className="wallet-dot" />
+                  <code style={{ fontSize: '0.75rem' }} title={walletAddress}>{truncateAddr(walletAddress)}</code>
+                  <button onClick={copyAddress} style={{ background: 'none', border: 'none', color: copied ? 'var(--accent-emerald)' : 'var(--text-muted)', cursor: 'pointer', padding: '0', display: 'flex', lineHeight: '1' }} title="Copy">
+                    <Copy size={11} />
+                  </button>
+                </div>
+                <button className="btn btn-secondary" onClick={disconnectWallet} title={t.disconnectBtn} style={{ padding: '0.35rem 0.6rem', borderRadius: '99px' }}>
+                  <LogOut size={13} />
                 </button>
               </div>
-              <button className="btn btn-secondary" onClick={disconnectWallet} title={t.disconnectBtn} style={{ padding: '0.35rem 0.6rem', borderRadius: '99px' }}>
-                <LogOut size={13} />
+            ) : (
+              <button className="btn btn-accent" onClick={connectWallet} disabled={isConnecting} style={{ padding: '0.45rem 1rem', borderRadius: '8px', fontSize: '0.85rem' }}>
+                {isConnecting ? <><RefreshCw size={14} className="spinner" /> Connecting...</> : <><Wallet size={14} /> {t.connectBtn}</>}
               </button>
-            </div>
-          ) : (
-            <button className="btn btn-accent" onClick={connectWallet} disabled={isConnecting} style={{ padding: '0.45rem 1rem', borderRadius: '8px', fontSize: '0.85rem' }}>
-              {isConnecting ? <><RefreshCw size={14} className="spinner" /> Connecting...</> : <><Wallet size={14} /> {t.connectBtn}</>}
-            </button>
-          )}
+            )}
+          </div>
 
-          <button className="navbar-burger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
+          {/* Language Switcher and Burger Button (Visible on mobile) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {!walletAddress && (
+              <button onClick={() => setLang(lang === 'en' ? 'tr' : 'en')} className="btn btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem', borderRadius: '99px' }}>
+                {lang === 'en' ? 'TR' : 'EN'}
+              </button>
+            )}
+            <button className="navbar-burger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+          </div>
         </div>
       </nav>
 
       {/* Mobile nav dropdown overlay */}
-      {walletAddress && (
-        <div className={`mobile-nav-overlay ${mobileMenuOpen ? 'open' : ''}`}>
-          {[
-            { tab: 'overview', icon: <Home size={14} />, label: t.dashboardTab },
-            { tab: 'invoices', icon: <LayoutDashboard size={14} />, label: t.myInvoices },
-            { tab: 'create-invoice', icon: <PlusCircle size={14} />, label: t.createTitle },
-            { tab: 'pay-invoice', icon: <CreditCard size={14} />, label: t.payTitle },
-            { tab: 'advanced', icon: <Cpu size={14} />, label: t.advancedTab },
-          ].map(({ tab, icon, label }) => (
-            <button key={tab} onClick={() => { setActiveTab(tab as any); setMobileMenuOpen(false); }}
-              className={`navbar-link ${activeTab === tab ? 'active' : ''}`} style={{ justifyContent: 'flex-start', width: '100%', padding: '0.75rem 1rem' }}>
-              {icon} {label}
+      <div className={`mobile-nav-overlay ${mobileMenuOpen ? 'open' : ''}`}>
+        {walletAddress ? (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem', background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="wallet-chip" style={{ background: 'transparent', border: 'none', padding: 0 }}>
+                  <span className="wallet-dot" />
+                  <code style={{ fontSize: '0.75rem' }}>{truncateAddr(walletAddress)}</code>
+                </div>
+                <button onClick={copyAddress} style={{ background: 'none', border: 'none', color: copied ? 'var(--accent-emerald)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
+                  <Copy size={12} /> {copied ? ' Copied!' : ''}
+                </button>
+              </div>
+              <button className="btn btn-secondary" onClick={() => { disconnectWallet(); setMobileMenuOpen(false); }} style={{ width: '100%', fontSize: '0.75rem', padding: '0.4rem' }}>
+                <LogOut size={12} /> {t.disconnectBtn}
+              </button>
+            </div>
+
+            {[
+              { tab: 'overview', icon: <Home size={14} />, label: t.dashboardTab },
+              { tab: 'invoices', icon: <LayoutDashboard size={14} />, label: t.myInvoices },
+              { tab: 'create-invoice', icon: <PlusCircle size={14} />, label: t.createTitle },
+              { tab: 'pay-invoice', icon: <CreditCard size={14} />, label: t.payTitle },
+              { tab: 'advanced', icon: <Cpu size={14} />, label: t.advancedTab },
+            ].map(({ tab, icon, label }) => (
+              <button key={tab} onClick={() => { setActiveTab(tab as any); setMobileMenuOpen(false); }}
+                className={`navbar-link ${activeTab === tab ? 'active' : ''}`} style={{ justifyContent: 'flex-start', width: '100%', padding: '0.75rem 1rem' }}>
+                {icon} {label}
+              </button>
+            ))}
+          </>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <button className="btn btn-accent" onClick={() => { connectWallet(); setMobileMenuOpen(false); }} style={{ width: '100%' }}>
+              <Wallet size={14} /> {t.connectBtn}
             </button>
-          ))}
-          <hr style={{ border: 'none', borderTop: '2px solid var(--border)', margin: '0.5rem 0' }} />
+            <button className="btn btn-secondary" onClick={() => { activateDemoMode(); setMobileMenuOpen(false); }} style={{ width: '100%', borderColor: 'var(--accent)', color: 'var(--accent)' }}>
+              <Award size={14} /> {t.demoModeBtn}
+            </button>
+          </div>
+        )}
+        <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0.75rem 0' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <button onClick={() => setLang(lang === 'en' ? 'tr' : 'en')} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem' }}>
+            🌐 {lang === 'en' ? 'Türkçe' : 'English'}
+          </button>
           <a href="https://forms.gle/DMxtyMvZkgKaEYE59" target="_blank" rel="noreferrer" className="navbar-link"
-            style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'var(--accent-emerald)', width: '100%', padding: '0.75rem 1rem' }}>
+            style={{ textDecoration: 'none', color: 'var(--accent-emerald)', padding: '0.4rem' }}>
             {t.feedbackBtn}
           </a>
         </div>
-      )}
+      </div>
 
       {/* ── MAIN CONTENT ── */}
       <div className="content-wrapper">
@@ -674,7 +712,7 @@ function App() {
 
         {/* ── LANDING PAGE (Not Connected) ── */}
         {!walletAddress ? (
-          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', minHeight: 'calc(100vh - 70px)', paddingBottom: '4rem' }}>
+          <div className="hero-container" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', minHeight: 'calc(100vh - 80px)', paddingBottom: '4rem' }}>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2rem' }}>
               <span className="testnet-badge"><span className="testnet-dot" />Testnet</span>
@@ -693,7 +731,7 @@ function App() {
               {t.subtitle}
             </p>
 
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="hero-cta-buttons" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
               <button className="btn btn-accent" onClick={connectWallet} disabled={isConnecting} style={{ padding: '0.85rem 2rem', fontSize: '0.95rem' }}>
                 {isConnecting ? <><RefreshCw size={16} className="spinner" /> Connecting...</> : <><Wallet size={16} /> {t.connectBtn}</>}
               </button>
@@ -705,7 +743,7 @@ function App() {
               </a>
             </div>
 
-            <div style={{ display: 'flex', gap: '3rem', marginTop: '5rem', flexWrap: 'wrap' }}>
+            <div className="hero-stats-row" style={{ display: 'flex', gap: '3rem', marginTop: '5rem', flexWrap: 'wrap' }}>
               {[{ label: 'Protocol', value: 'Soroban' }, { label: 'Avg. Fee', value: '< 0.0001 XLM' }, { label: 'Settlement', value: '~5 seconds' }].map(({ label, value }) => (
                 <div key={label}>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.25rem', fontFamily: 'var(--font-mono)' }}>{label}</div>
@@ -751,7 +789,7 @@ function App() {
                       </div>
                     </div>
 
-                    <hr style={{ border: 'none', borderTop: '2px solid var(--border)' }} />
+                    <hr style={{ border: 'none', borderTop: '1px solid var(--border)' }} />
 
                     {/* Trust Badges */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -759,7 +797,14 @@ function App() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                         
                         <div className={`trust-badge-card ${isPioneerUnlocked ? 'unlocked' : 'locked'}`}>
-                          <div className="trust-badge-icon-wrapper">🚀</div>
+                          <div className="trust-badge-icon-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
+                              <path d="M12 2C6.5 2 2 6.5 2 12c0 1.2 .2 2.4 .7 3.5L11 7l5.5 5.5-8.5 8.3c1.1 .5 2.3 .7 3.5 .7 5.5 0 10-4.5 10-10C22 6.5 17.5 2 12 2z" />
+                              <path d="M9 15l-4 4" />
+                              <path d="M15 9l4-4" />
+                            </svg>
+                          </div>
                           <div className="trust-badge-info">
                             <span className="trust-badge-name">{t.stellarPioneer}</span>
                             <span className="trust-badge-desc">{t.stellarPioneerDesc}</span>
@@ -768,7 +813,11 @@ function App() {
                         </div>
 
                         <div className={`trust-badge-card ${isDelivererUnlocked ? 'unlocked' : 'locked'}`}>
-                          <div className="trust-badge-icon-wrapper">⚡</div>
+                          <div className="trust-badge-icon-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
+                          </div>
                           <div className="trust-badge-info">
                             <span className="trust-badge-name">{t.fastDeliverer}</span>
                             <span className="trust-badge-desc">{t.fastDelivererDesc}</span>
@@ -777,7 +826,11 @@ function App() {
                         </div>
 
                         <div className={`trust-badge-card ${isTrustAnchorUnlocked ? 'unlocked' : 'locked'}`}>
-                          <div className="trust-badge-icon-wrapper">🛡️</div>
+                          <div className="trust-badge-icon-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                            </svg>
+                          </div>
                           <div className="trust-badge-info">
                             <span className="trust-badge-name">{t.trustAnchor}</span>
                             <span className="trust-badge-desc">{t.trustAnchorDesc}</span>
@@ -786,7 +839,14 @@ function App() {
                         </div>
 
                         <div className={`trust-badge-card ${isVolumeUnlocked ? 'unlocked' : 'locked'}`}>
-                          <div className="trust-badge-icon-wrapper">💎</div>
+                          <div className="trust-badge-icon-wrapper">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M6 3h12l4 6-10 13L2 9z" />
+                              <path d="M11 3 8 9l3 13" />
+                              <path d="M13 3l3 9-3 10" />
+                              <path d="M2 9h20" />
+                            </svg>
+                          </div>
                           <div className="trust-badge-info">
                             <span className="trust-badge-name">{t.highVolume}</span>
                             <span className="trust-badge-desc">{t.highVolumeDesc}</span>
@@ -945,7 +1005,6 @@ function App() {
                         <button
                           key={id}
                           onClick={() => {
-                            // Find and lookup
                             const input = document.getElementById('search-invoice-input') as HTMLInputElement;
                             if (input) {
                               input.value = id;
@@ -1016,6 +1075,17 @@ function App() {
           </>
         )}
       </div>
+
+      {/* ── SHARED FOOTER ── */}
+      <footer className="footer">
+        <div className="footer-content">
+          <span>&copy; {new Date().getFullYear()} StellarPay. All rights reserved.</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span>Built on</span>
+            <a href="https://stellar.org" target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none' }}>Stellar Soroban</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

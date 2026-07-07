@@ -161,8 +161,6 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
       sent.sort((a, b) => b.id - a.id);
       received.sort((a, b) => b.id - a.id);
 
-      //Testerların public adreslerini loga yazdır
-      console.log('Unique Testers:', Array.from(testersSet));
       setSentInvoices(sent);
       setReceivedInvoices(received);
       setUniqueTestersCount(testersSet.size);
@@ -266,7 +264,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+      <div className="dashboard-header-row">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <LayoutDashboard size={20} style={{ color: '#10b981' }} />
           <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{t.myInvoices}</h3>
@@ -325,7 +323,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
 
       {/* Stats Grid */}
       {activeSubTab === 'sent' ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        <div className="dashboard-stats-grid">
           {[
             { label: t.totalSent, value: stats.total, color: '#94a3b8', icon: FileText },
             { label: t.pending, value: stats.pending, color: '#f59e0b', icon: FileText },
@@ -340,7 +338,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
           ))}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '1.5rem' }}>
+        <div className="dashboard-stats-grid-3">
           {[
             { label: t.totalReceived, value: receivedInvoices.length, color: '#a78bfa', icon: FileText },
             { label: t.awaitingPay, value: receivedInvoices.filter(i => i.status === 'Pending').length, color: '#f59e0b', icon: FileText },
