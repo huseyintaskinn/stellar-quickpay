@@ -130,7 +130,16 @@ export const translations = {
     // Demo Mode Additions
     demoModeBtn: "Try Live Demo Mode",
     demoModeActive: "Demo Mode Active (Simulated Wallet)",
-    demoModeExit: "Exit Demo Mode"
+    demoModeExit: "Exit Demo Mode",
+    
+    // Missing Translations
+    unlocked: "Unlocked",
+    locked: "Locked",
+    me: " (Me)",
+    accountInactive: "Account Inactive",
+    accountInactiveDesc: "Your wallet is inactive on testnet. Requesting faucet XLM activates it.",
+    requestFaucetBtn: "Request Faucet XLM",
+    learnAboutStellar: "Learn about Stellar"
   },
   tr: {
     // App.tsx
@@ -263,6 +272,15 @@ export const translations = {
     // Demo Mode Additions
     demoModeBtn: "Canlı Demo Modunu Dene",
     demoModeActive: "Demo Modu Aktif (Simüle Cüzdan)",
-    demoModeExit: "Demo Modundan Çık"
+    demoModeExit: "Demo Modundan Çık",
+    
+    // Missing Translations
+    unlocked: "Açıldı",
+    locked: "Kilitli",
+    me: " (Ben)",
+    accountInactive: "Hesap Aktif Değil",
+    accountInactiveDesc: "Cüzdanınız testnet üzerinde aktif değil. Musluktan XLM talep ederek aktif edebilirsiniz.",
+    requestFaucetBtn: "Faucet XLM Talep Et",
+    learnAboutStellar: "Stellar Hakkında Bilgi Al"
   }
 };

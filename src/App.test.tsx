@@ -20,7 +20,8 @@ describe('StellarPay dApp', () => {
 
   it('should show the correct network indicator as Testnet', () => {
     render(<App />);
-    const networkBadge = screen.getByText(/Stellar Testnet/i);
-    expect(networkBadge).toBeInTheDocument();
+    const networkBadges = screen.getAllByText(/Stellar Testnet/i);
+    expect(networkBadges.length).toBeGreaterThan(0);
+    expect(networkBadges[0]).toBeInTheDocument();
   });
 });

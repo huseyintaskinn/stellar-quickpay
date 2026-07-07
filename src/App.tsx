@@ -116,8 +116,26 @@ function App() {
   const server = new Horizon.Server(HORIZON_URL);
   const rpcServer = new rpc.Server(SOROBAN_RPC_URL);
 
-  // Initialize Stellar Wallets Kit on mount
+  const [mousePos, setMousePos] = useState({ x: -200, y: -200 });
+  const [isHovering, setIsHovering] = useState(false);
+  const [cursorClicked, setCursorClicked] = useState(false);
+
+  // Initialize Stellar Wallets Kit and Mouse listeners on mount
   useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+      const target = e.target as HTMLElement;
+      const isClickable = target.closest('a, button, input, select, textarea, [role="button"]') !== null;
+      setIsHovering(isClickable);
+    };
+
+    const handleMouseDown = () => setCursorClicked(true);
+    const handleMouseUp = () => setCursorClicked(false);
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mouseup', handleMouseUp);
+
     try {
       StellarWalletsKit.init({
         modules: [
@@ -143,6 +161,12 @@ function App() {
     } catch (err) {
       console.error("Error initializing Stellar Wallets Kit:", err);
     }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
   }, []);
 
   // Fetch contract metadata (symbol, balance)
@@ -550,6 +574,10 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* Custom Mouse Follower Cursor & Glow Trail */}
+      <div className={`custom-cursor ${isHovering ? 'hovering' : ''} ${cursorClicked ? 'clicked' : ''}`} style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px` }} />
+      <div className="cursor-trail" style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px` }} />
+
       {isDemoActive && (
         <div className="demo-banner">
           <span>⚙️ {t.demoModeActive}</span>
@@ -739,7 +767,7 @@ function App() {
                 <Award size={16} /> {t.demoModeBtn}
               </button>
               <a href="https://stellar.org" target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '0.85rem 1.75rem', fontSize: '0.95rem', textDecoration: 'none' }}>
-                Learn about Stellar <ExternalLink size={14} />
+                {t.learnAboutStellar} <ExternalLink size={14} />
               </a>
             </div>
 
@@ -794,64 +822,73 @@ function App() {
                     {/* Trust Badges */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{t.badgesTitle}</span>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginTop: '0.5rem' }}>
                         
-                        <div className={`trust-badge-card ${isPioneerUnlocked ? 'unlocked' : 'locked'}`}>
-                          <div className="trust-badge-icon-wrapper">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
-                              <path d="M12 2C6.5 2 2 6.5 2 12c0 1.2 .2 2.4 .7 3.5L11 7l5.5 5.5-8.5 8.3c1.1 .5 2.3 .7 3.5 .7 5.5 0 10-4.5 10-10C22 6.5 17.5 2 12 2z" />
-                              <path d="M9 15l-4 4" />
-                              <path d="M15 9l4-4" />
-                            </svg>
+                        <div className={`github-badge-container ${isPioneerUnlocked ? 'unlocked' : 'locked'}`} title={t.stellarPioneerDesc}>
+                          <div className="github-badge-circle">
+                            <div className="github-badge-icon">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
+                                <path d="M12 2C6.5 2 2 6.5 2 12c0 1.2 .2 2.4 .7 3.5L11 7l5.5 5.5-8.5 8.3c1.1 .5 2.3 .7 3.5 .7 5.5 0 10-4.5 10-10C22 6.5 17.5 2 12 2z" />
+                                <path d="M9 15l-4 4" />
+                                <path d="M15 9l4-4" />
+                              </svg>
+                            </div>
+                            {isPioneerUnlocked && <span className="github-badge-multiplier">x1</span>}
                           </div>
-                          <div className="trust-badge-info">
-                            <span className="trust-badge-name">{t.stellarPioneer}</span>
-                            <span className="trust-badge-desc">{t.stellarPioneerDesc}</span>
+                          <div className="github-badge-info">
+                            <span className="github-badge-name">{t.stellarPioneer}</span>
+                            <span className="github-badge-status">{isPioneerUnlocked ? t.unlocked : t.locked}</span>
                           </div>
-                          <span className="trust-badge-status">{isPioneerUnlocked ? 'Unlocked' : 'Locked'}</span>
                         </div>
 
-                        <div className={`trust-badge-card ${isDelivererUnlocked ? 'unlocked' : 'locked'}`}>
-                          <div className="trust-badge-icon-wrapper">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                            </svg>
+                        <div className={`github-badge-container ${isDelivererUnlocked ? 'unlocked' : 'locked'}`} title={t.fastDelivererDesc}>
+                          <div className="github-badge-circle">
+                            <div className="github-badge-icon">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                              </svg>
+                            </div>
+                            {isDelivererUnlocked && <span className="github-badge-multiplier">x1</span>}
                           </div>
-                          <div className="trust-badge-info">
-                            <span className="trust-badge-name">{t.fastDeliverer}</span>
-                            <span className="trust-badge-desc">{t.fastDelivererDesc}</span>
+                          <div className="github-badge-info">
+                            <span className="github-badge-name">{t.fastDeliverer}</span>
+                            <span className="github-badge-status">{isDelivererUnlocked ? t.unlocked : t.locked}</span>
                           </div>
-                          <span className="trust-badge-status">{isDelivererUnlocked ? 'Unlocked' : 'Locked'}</span>
                         </div>
 
-                        <div className={`trust-badge-card ${isTrustAnchorUnlocked ? 'unlocked' : 'locked'}`}>
-                          <div className="trust-badge-icon-wrapper">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                            </svg>
+                        <div className={`github-badge-container ${isTrustAnchorUnlocked ? 'unlocked' : 'locked'}`} title={t.trustAnchorDesc}>
+                          <div className="github-badge-circle">
+                            <div className="github-badge-icon">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                              </svg>
+                            </div>
+                            {isTrustAnchorUnlocked && <span className="github-badge-multiplier">x1</span>}
                           </div>
-                          <div className="trust-badge-info">
-                            <span className="trust-badge-name">{t.trustAnchor}</span>
-                            <span className="trust-badge-desc">{t.trustAnchorDesc}</span>
+                          <div className="github-badge-info">
+                            <span className="github-badge-name">{t.trustAnchor}</span>
+                            <span className="github-badge-status">{isTrustAnchorUnlocked ? t.unlocked : t.locked}</span>
                           </div>
-                          <span className="trust-badge-status">{isTrustAnchorUnlocked ? 'Unlocked' : 'Locked'}</span>
                         </div>
 
-                        <div className={`trust-badge-card ${isVolumeUnlocked ? 'unlocked' : 'locked'}`}>
-                          <div className="trust-badge-icon-wrapper">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M6 3h12l4 6-10 13L2 9z" />
-                              <path d="M11 3 8 9l3 13" />
-                              <path d="M13 3l3 9-3 10" />
-                              <path d="M2 9h20" />
-                            </svg>
+                        <div className={`github-badge-container ${isVolumeUnlocked ? 'unlocked' : 'locked'}`} title={t.highVolumeDesc}>
+                          <div className="github-badge-circle">
+                            <div className="github-badge-icon">
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M6 3h12l4 6-10 13L2 9z" />
+                                <path d="M11 3 8 9l3 13" />
+                                <path d="M13 3l3 9-3 10" />
+                                <path d="M2 9h20" />
+                              </svg>
+                            </div>
+                            {isVolumeUnlocked && <span className="github-badge-multiplier">x1</span>}
                           </div>
-                          <div className="trust-badge-info">
-                            <span className="trust-badge-name">{t.highVolume}</span>
-                            <span className="trust-badge-desc">{t.highVolumeDesc}</span>
+                          <div className="github-badge-info">
+                            <span className="github-badge-name">{t.highVolume}</span>
+                            <span className="github-badge-status">{isVolumeUnlocked ? t.unlocked : t.locked}</span>
                           </div>
-                          <span className="trust-badge-status">{isVolumeUnlocked ? 'Unlocked' : 'Locked'}</span>
                         </div>
 
                       </div>
@@ -874,17 +911,19 @@ function App() {
                         <tbody>
                           {getDynamicLeaderboard().slice(0, 5).map((entry, idx) => {
                             const isMe = entry.address === walletAddress;
+                            const podiumClass = idx === 0 ? 'leaderboard-rank-1' : idx === 1 ? 'leaderboard-rank-2' : idx === 2 ? 'leaderboard-rank-3' : '';
+                            const rankLabel = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
                             return (
-                              <tr key={idx} style={{ background: isMe ? 'rgba(245,197,24,0.06)' : 'transparent' }}>
-                                <td style={{ padding: '0.5rem', fontWeight: 800, color: idx === 0 ? 'var(--accent)' : 'inherit' }}>
-                                  #{idx + 1}
+                              <tr key={idx} className={podiumClass} style={{ background: isMe ? 'rgba(245,197,24,0.05)' : undefined }}>
+                                <td style={{ padding: '0.65rem 0.5rem', fontWeight: 800 }}>
+                                  {rankLabel}
                                 </td>
-                                <td style={{ padding: '0.5rem' }}>
+                                <td style={{ padding: '0.65rem 0.5rem' }}>
                                   <code style={{ fontSize: '0.72rem' }}>
-                                    {truncateAddr(entry.address)} {isMe ? ' (Me)' : ''}
+                                    {truncateAddr(entry.address)}{isMe ? t.me : ''}
                                   </code>
                                 </td>
-                                <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                                <td style={{ padding: '0.65rem 0.5rem', textAlign: 'right', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
                                   {entry.completed}
                                 </td>
                               </tr>
@@ -915,9 +954,9 @@ function App() {
 
                   {!isAccountActivated && (
                     <div className="card" style={{ background: 'rgba(245,68,68,0.02)', borderColor: 'rgba(245,68,68,0.2)' }}>
-                      <span className="card-title-mono" style={{ color: '#ef4444' }}>Account Inactive</span>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: '1.5' }}>Your wallet is inactive. Funding activates it.</p>
-                      <button className="btn btn-accent" onClick={claimFaucet} style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>Request Faucet XLM</button>
+                      <span className="card-title-mono" style={{ color: '#ef4444' }}>{t.accountInactive}</span>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: '1.5' }}>{t.accountInactiveDesc}</p>
+                      <button className="btn btn-accent" onClick={claimFaucet} style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>{t.requestFaucetBtn}</button>
                     </div>
                   )}
                 </div>
@@ -1079,11 +1118,43 @@ function App() {
       {/* ── SHARED FOOTER ── */}
       <footer className="footer">
         <div className="footer-content">
-          <span>&copy; {new Date().getFullYear()} StellarPay. All rights reserved.</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span>Built on</span>
-            <a href="https://stellar.org" target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', fontWeight: 700, textDecoration: 'none' }}>Stellar Soroban</a>
+          <div className="footer-col" style={{ flex: '1.5 1 300px' }}>
+            <span className="navbar-logo-text" style={{ fontSize: '1.1rem', display: 'block', marginBottom: '0.75rem' }}>StellarPay</span>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: '1.6', maxWidth: '320px' }}>
+              StellarPay is a next-generation Web3 invoicing and escrow payment system powered by Stellar Soroban smart contracts. Build trust globally with transparent on-chain freelancers profiles.
+            </p>
           </div>
+          
+          <div className="footer-col" style={{ flex: '1 1 200px' }}>
+            <h4 style={{ fontSize: '0.85rem', marginBottom: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>Quick Navigation</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button onClick={() => { if(walletAddress) { setActiveTab('overview'); } else { connectWallet(); } }} className="footer-link">Dashboard</button>
+              <button onClick={() => { if(walletAddress) { setActiveTab('invoices'); } else { connectWallet(); } }} className="footer-link">My Invoices</button>
+              <button onClick={() => { if(walletAddress) { setActiveTab('create-invoice'); } else { connectWallet(); } }} className="footer-link">Create Invoice</button>
+              <button onClick={() => { if(walletAddress) { setActiveTab('pay-invoice'); } else { connectWallet(); } }} className="footer-link">Pay Invoice</button>
+            </div>
+          </div>
+          
+          <div className="footer-col" style={{ flex: '1 1 250px' }}>
+            <h4 style={{ fontSize: '0.85rem', marginBottom: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>Developer & Code</h4>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>Created by <strong>Hüseyin Taşkın</strong></p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <a href="https://github.com/huseyintaskinn/stellar-quickpay" target="_blank" rel="noreferrer" className="footer-link" style={{ textDecoration: 'none' }}>
+                📁 GitHub Repository <ExternalLink size={11} />
+              </a>
+              <a href="https://github.com/huseyintaskinn" target="_blank" rel="noreferrer" className="footer-link" style={{ textDecoration: 'none' }}>
+                👤 GitHub Profile <ExternalLink size={11} />
+              </a>
+              <a href="https://forms.gle/DMxtyMvZkgKaEYE59" target="_blank" rel="noreferrer" className="footer-link" style={{ textDecoration: 'none', color: 'var(--accent-emerald)' }}>
+                💬 Share Feedback <ExternalLink size={11} />
+              </a>
+            </div>
+          </div>
+        </div>
+        <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1.5rem 0 1rem 0' }} />
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <span>&copy; {new Date().getFullYear()} StellarPay. All rights reserved.</span>
+          <span>Built on Stellar Testnet</span>
         </div>
       </footer>
     </div>
