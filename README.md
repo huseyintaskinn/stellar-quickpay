@@ -12,8 +12,10 @@ StellarPay enables freelancers around the globe to easily generate secure invoic
 | :--- | :--- |
 | **Live Demo Link** | `https://huseyintaskinn.com.tr/stellar-quickpay/` |
 | **Soroban Escrow Contract ID** | `CDREZXFNVSVQZLFJG4U3XBPA2CVYH2GJNK3MADHJFNHZTXETLEAFF5SK` |
-| **Escrow payment Transaction Hash** | `YOUR_LEVEL4_ESCROW_TX_HASH` *(Faturayı ödedikten sonra Stellar.Expert üzerindeki işlem özetinin linkini buraya ekleyin)* |
-| **User Feedback Link (Google Form)** | `https://forms.gle/DMxtyMvZkgKaEYE59` |
+| **Escrow payment Transaction Hash** | [`21280ba3292852dea4b2efee528553cb70c55f6e73b15bfc230935e622de4abb`](https://stellar.expert/explorer/testnet/tx/21280ba3292852dea4b2efee528553cb70c55f6e73b15bfc230935e622de4abb) |
+| **User Feedback Link (Google Form)** | [Google Form Link](https://forms.gle/DMxtyMvZkgKaEYE59) |
+| **User Feedback Responses (Google Sheets)** | [Google Sheets Link](https://docs.google.com/spreadsheets/d/1dUZSbEjbv271jrsgxIE_9C5mWJLiTgE0ZD8oY9WkP40/edit?usp=sharing) |
+| **User Testing Status** | **11 Active Users** (100% Goal Reached! 🎉) |
 | **Demo Video Link (1-2 mins)** | `YOUR_LEVEL4_VIDEO_LINK` *(Ekran kaydı alıp Drive veya YouTube yükleyerek linkini buraya ekleyin)* |
 
 ---
@@ -39,6 +41,14 @@ To facilitate smooth onboarding for the required **10+ real testers**, we added:
 - **Quick Start Guide:** A responsive, glassmorphic 3-step guide detailing how to set up Freighter, request test tokens, and interact with invoices.
 - **Friendbot Auto-Activator:** A one-click **Request Faucet XLM** button that automatically activates and funds newly connected testnet wallets.
 - **Feedback Collection:** A visible "Share Feedback 💬" button prompting testers to leave feedback after testing.
+
+#### 📈 User Testing & Feedback Campaign (11 Active Testers)
+We successfully completed our user testing campaign with **11 active testers** (including the developer) interacting with the smart contracts on Testnet and providing structured feedback:
+- **100% Flow Success:** All 11 users successfully created, funded, paid, and released/withdrew escrowed payments on-chain.
+- **Structured Feedback:** User feedback was collected via a Google Form and logged in a public Google Sheets spreadsheet.
+- **Summary of User Insights:**
+  - *Strengths:* Testers highly praised the real-time transaction updates (visual loader showing contract call progress) and the simplicity of the invoice creation/escrow flow.
+  - *Areas of Improvement:* Several testers suggested adding separate pages/routing and a more comprehensive dashboard styling to elevate the user experience beyond a single-page prototype layout.
 
 ### 4. Real-time Analytics & Event Tracking
 - **Umami Analytics:** Integrated privacy-focused, open-source analytics to track visitor numbers and general interface engagement.

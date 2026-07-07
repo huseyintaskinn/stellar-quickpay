@@ -109,6 +109,8 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
       sent.sort((a, b) => b.id - a.id);
       received.sort((a, b) => b.id - a.id);
 
+      //Testerların public adreslerini loga yazdır
+      console.log('Unique Testers:', Array.from(testersSet));
       setSentInvoices(sent);
       setReceivedInvoices(received);
       setUniqueTestersCount(testersSet.size);
