@@ -35,7 +35,12 @@ import {
   Layers,
   FileText,
   CreditCard,
-  LayoutDashboard
+  LayoutDashboard,
+  Menu,
+  X,
+  Home,
+  Award,
+  Trophy
 } from 'lucide-react';
 import { VaultDashboard } from './VaultDashboard';
 import { InvoiceCreator } from './components/InvoiceCreator';
@@ -53,6 +58,11 @@ interface PaymentTx {
   created_at: string;
 }
 
+interface LeaderboardEntry {
+  address: string;
+  completed: number;
+}
+
 function App() {
   const [lang, setLang] = useState<'en' | 'tr'>('en');
   const t = translations[lang];
@@ -67,7 +77,8 @@ function App() {
   const [isFunding, setIsFunding] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'classic' | 'soroban' | 'create-invoice' | 'pay-invoice' | 'dashboard'>('create-invoice');
+  const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'create-invoice' | 'pay-invoice' | 'advanced'>('overview');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // StellarPay Escrow Contract
   const ESCROW_CONTRACT_ID = 'CDREZXFNVSVQZLFJG4U3XBPA2CVYH2GJNK3MADHJFNHZTXETLEAFF5SK';
@@ -97,6 +108,12 @@ function App() {
   const [history, setHistory] = useState<PaymentTx[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  // Search History State (Local Storage Caching)
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    const saved = localStorage.getItem('invoice_search_history');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   // Server Instances
   const HORIZON_URL = 'https://horizon-testnet.stellar.org';
   const SOROBAN_RPC_URL = 'https://soroban-testnet.stellar.org';
@@ -116,7 +133,6 @@ function App() {
         network: WalletKitNetworks.TESTNET
       });
       
-      // Auto-check if wallet address is stored/connected
       const checkCurrentAddress = async () => {
         try {
           const { address } = await StellarWalletsKit.getAddress();
@@ -138,7 +154,6 @@ function App() {
   const fetchContractMetadata = async (address: string) => {
     setLoadingContract(true);
     try {
-      // Create a dummy account for read-only simulations
       const sourceAccount = new Account(address, '1');
 
       // 1. Query symbol()
@@ -300,7 +315,6 @@ function App() {
     setIsConnecting(true);
     setTxStatus({ type: 'idle', message: '' });
     try {
-      // Open the connection modal
       const { address } = await StellarWalletsKit.authModal();
       
       if (address) {
@@ -377,7 +391,6 @@ function App() {
     setTxStatus({ type: 'loading', message: 'Preparing classic payment transaction...' });
 
     try {
-      // 1. Input validations (Error Type 1)
       if (!recipient.startsWith('G') || recipient.length !== 56) {
         throw new Error('Invalid recipient address format. Stellar addresses are 56 characters and start with G.');
       }
@@ -387,7 +400,6 @@ function App() {
         throw new Error('Please enter a valid amount greater than 0.');
       }
 
-      // 2. Insufficient balance checks (Error Type 2)
       if (balance) {
         const currentBalanceVal = parseFloat(balance);
         if (parsedAmount + 0.0001 > currentBalanceVal) {
@@ -395,7 +407,6 @@ function App() {
         }
       }
 
-      // 3. Load account
       setTxStatus({ type: 'loading', message: 'Fetching sender account details...' });
       let sourceAccount;
       try {
@@ -404,7 +415,6 @@ function App() {
         throw new Error('Sender account is not active on-chain. Please fund it using the Faucet first.');
       }
 
-      // 4. Build transaction
       setTxStatus({ type: 'loading', message: 'Building transaction fee and operations...' });
       const fee = await server.fetchBaseFee();
 
@@ -428,7 +438,6 @@ function App() {
       const transaction = transactionBuilder.build();
       const xdr = transaction.toXDR();
 
-      // 5. Sign the transaction using Stellar Wallets Kit (Error Type 3)
       setTxStatus({ type: 'loading', message: 'Awaiting signature in connected wallet...' });
       const { signedTxXdr } = await StellarWalletsKit.signTransaction(xdr, { 
         networkPassphrase: Networks.TESTNET,
@@ -439,7 +448,6 @@ function App() {
         throw new Error('Signing request rejected. Transaction was not signed.');
       }
 
-      // 6. Submit to Horizon Network
       setTxStatus({ type: 'loading', message: 'Submitting transaction to Horizon Testnet...' });
       const transactionToSubmit = TransactionBuilder.fromXDR(signedTxXdr, Networks.TESTNET);
       const response = await server.submitTransaction(transactionToSubmit);
@@ -460,7 +468,6 @@ function App() {
       console.error('Payment execution failed:', err);
       let errorMsg = err.message || err.toString();
       
-      // Parse Stellar horizon error responses if available
       if (err.response && err.response.data && err.response.data.extras && err.response.data.extras.result_codes) {
         const codes = err.response.data.extras.result_codes;
         if (codes.operations && codes.operations.length > 0) {
@@ -507,338 +514,363 @@ function App() {
     }
   };
 
+  // Add search history caching helper
+  const handleSearchLookup = (id: string) => {
+    if (!id) return;
+    const historyUpdated = [id, ...searchHistory.filter(h => h !== id)].slice(0, 5);
+    setSearchHistory(historyUpdated);
+    localStorage.setItem('invoice_search_history', JSON.stringify(historyUpdated));
+  };
+
+  // Mock Active Testers for Leaderboard
+  const LEADERBOARD_DATA: LeaderboardEntry[] = [
+    { address: 'GBGHSPQEIZGJOJJDJYG5VVIPU7THJQU2Z4B6V5VF5IHUQ2SOLIRITDQS', completed: 6 },
+    { address: 'GAJOE3OBM5CDRG75LLO732V3ZZB5LPT6VIWBOAHCYXW57DTYOOGCLD6B', completed: 5 },
+    { address: 'GD7UFEHE4J3RKQ25ZDGGJ4VBUWATV645UUMN4JYDIBMSFCSFOWXSQ6LM', completed: 4 },
+    { address: 'GCZDX5E7RT7BTTA6VJC7YYHOYQYNHRDGEDB3O32K74VC52LC7XFCEZTH', completed: 4 },
+    { address: 'GC74KHZR7ASDTNQL37RDWNH3CDXW6W5BBPIJHCYQ3THFHXAHTXINKBCU', completed: 3 },
+    { address: 'GC3HF6V7RVDY4HOEEFK2HZBVHYIR6BJI3ZW5ZIPDRWAOZCMNHSIBUUU2', completed: 3 },
+    { address: 'GCK3FLKPSX7BFW2ZT4Y7UYTMGXQJNG4VATNHNVN6HY35Q7VCK5KMY35A', completed: 2 },
+    { address: 'GARK7CKUWU5KMQ2SN2YDNUC6VVHJS4TZOKXFVTHMJXRT5OJ3A7R2NAH2', completed: 2 },
+    { address: 'GDN3LAXT3AIFBQ6HE7YJS2JYNXZC2MG4GAPLXFWCRYR724KUGVMHBMTH', completed: 1 },
+    { address: 'GBGXWU6KR6CPGLHOFVSJ5W4L7ZTVE34VILBRS4TFHV3OIH2SSTQV3AQM', completed: 1 }
+  ];
+
+  // Dynamic user statistics for Trust Profile & Badges
+  const userCompletedCount = history.filter(tx => tx.type === 'Contract Call').length;
+  const userVolume = history.filter(tx => tx.type === 'payment').reduce((acc, tx) => acc + parseFloat(tx.amount || '0'), 0);
+
+  // Dynamic Leaderboard list inserting current user
+  const getDynamicLeaderboard = (): LeaderboardEntry[] => {
+    if (!walletAddress) return LEADERBOARD_DATA;
+    const userInLeaderboard = LEADERBOARD_DATA.find(entry => entry.address === walletAddress);
+    if (userInLeaderboard) {
+      return [...LEADERBOARD_DATA].sort((a, b) => b.completed - a.completed);
+    }
+    const currentScore = userCompletedCount;
+    const list = [...LEADERBOARD_DATA, { address: walletAddress, completed: currentScore }];
+    return list.sort((a, b) => b.completed - a.completed);
+  };
+
+  // Gamification badges condition checks
+  const isPioneerUnlocked = userCompletedCount >= 1;
+  const isDelivererUnlocked = userCompletedCount >= 3;
+  const isTrustAnchorUnlocked = userCompletedCount >= 5;
+  const isVolumeUnlocked = userVolume >= 500;
+
   return (
     <div className="app-container">
-      {/* Header section */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 className="pulse-glow-text" style={{ fontSize: '2.2rem', margin: 0, fontWeight: 800, background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            {t.title}
-          </h1>
-          <p style={{ margin: '0.25rem 0 0 0', color: '#64748b', fontSize: '0.95rem' }}>
-            {t.subtitle}
-          </p>
+
+      {/* ── TOP NAVBAR ── */}
+      <nav className="navbar">
+        <div className="navbar-logo">
+          <div className="navbar-logo-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
+            </svg>
+          </div>
+          <span className="navbar-logo-text">StellarPay</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => setLang(lang === 'en' ? 'tr' : 'en')}
-            className="btn btn-secondary"
-            style={{
-              padding: '0.5rem 0.8rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex',
-              alignItems: 'center', gap: '0.35rem', color: '#a78bfa', background: 'rgba(139,92,246,0.06)',
-              border: '1px solid rgba(139,92,246,0.2)'
-            }}
-          >
-            🌐 {lang === 'en' ? 'Türkçe (TR)' : 'English (EN)'}
+        {/* Center nav links — grouped into separate pages */}
+        {walletAddress && (
+          <div className="navbar-nav">
+            <button onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} className={`navbar-link ${activeTab === 'overview' ? 'active' : ''}`}>
+              <Home size={14} /> {t.dashboardTab}
+            </button>
+            <button onClick={() => { setActiveTab('invoices'); setMobileMenuOpen(false); }} className={`navbar-link ${activeTab === 'invoices' ? 'active' : ''}`}>
+              <LayoutDashboard size={14} /> {t.myInvoices}
+            </button>
+            <button onClick={() => { setActiveTab('create-invoice'); setMobileMenuOpen(false); }} className={`navbar-link ${activeTab === 'create-invoice' ? 'active' : ''}`}>
+              <PlusCircle size={14} /> {t.createTitle}
+            </button>
+            <button onClick={() => { setActiveTab('pay-invoice'); setMobileMenuOpen(false); }} className={`navbar-link ${activeTab === 'pay-invoice' ? 'active' : ''}`}>
+              <CreditCard size={14} /> {t.payTitle}
+            </button>
+            <button onClick={() => { setActiveTab('advanced'); setMobileMenuOpen(false); }} className={`navbar-link ${activeTab === 'advanced' ? 'active' : ''}`}>
+              <Cpu size={14} /> {t.advancedTab}
+            </button>
+          </div>
+        )}
+
+        <div className="navbar-right">
+          <div className="testnet-badge">
+            <span className="testnet-dot" />
+            <span>{t.testnetIndicator}</span>
+          </div>
+
+          <button onClick={() => setLang(lang === 'en' ? 'tr' : 'en')} className="btn btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem', borderRadius: '99px' }}>
+            {lang === 'en' ? 'TR' : 'EN'}
           </button>
 
-          <a
-            href="https://forms.gle/DMxtyMvZkgKaEYE59"
-            target="_blank"
-            rel="noreferrer"
-            className="btn btn-secondary"
-            style={{
-              padding: '0.5rem 1rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex',
-              alignItems: 'center', gap: '0.35rem', color: '#10b981', background: 'rgba(16,185,129,0.06)',
-              border: '1px solid rgba(16,185,129,0.2)', textDecoration: 'none'
-            }}
-          >
-            <span>{t.feedbackBtn}</span>
-          </a>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', padding: '0.5rem 1rem', borderRadius: '10px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#06b6d4', boxShadow: '0 0 8px #06b6d4' }}></span>
-            <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8' }}>{t.testnetIndicator}</span>
-          </div>
-
-          {walletAddress && (
-            <button className="btn btn-secondary" onClick={disconnectWallet} title={t.disconnectBtn} style={{ padding: '0.5rem' }}>
-              <LogOut size={18} />
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* Onboarding Guide */}
-      <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2.5rem', background: 'linear-gradient(135deg, rgba(6,182,212,0.04) 0%, rgba(139,92,246,0.04) 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
-        <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#06b6d4', fontWeight: 700 }}>
-          <Info size={18} /> {t.guideTitle}
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', fontSize: '0.875rem', color: '#94a3b8', lineHeight: '1.6' }}>
-          <div>
-            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>{t.step1Title}</strong>
-            {t.step1Desc}
-          </div>
-          <div>
-            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>{t.step2Title}</strong>
-            {t.step2Desc}
-          </div>
-          <div>
-            <strong style={{ color: '#f8fafc', display: 'block', marginBottom: '0.25rem' }}>{t.step3Title}</strong>
-            {t.step3Desc}
-          </div>
-        </div>
-      </div>
-
-      {/* Core Dashboard / Connection States */}
-      {!walletAddress ? (
-        <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-          <div className="glass-panel" style={{ padding: '3rem 2rem', maxWidth: '500px', width: '100%', textAlign: 'center' }}>
-            <div style={{ background: 'rgba(6, 182, 212, 0.1)', color: '#06b6d4', width: '70px', height: '70px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', marginBottom: '1.5rem', margin: '0 auto 1.5rem auto' }}>
-              <Wallet size={36} />
-            </div>
-            <h2 style={{ fontSize: '1.6rem', fontWeight: 700, margin: '0 0 0.75rem 0' }}>{t.connectWallet}</h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: '1.6', margin: '0 0 2rem 0' }}>
-              {t.selectWalletDesc}
-            </p>
-            
-            <button 
-              className="btn btn-primary" 
-              onClick={connectWallet} 
-              disabled={isConnecting}
-              style={{ width: '100%' }}
-            >
-              {isConnecting ? (
-                <>
-                  <RefreshCw size={18} className="spinner" />
-                  Select Wallet...
-                </>
-              ) : (
-                <>
-                  <Wallet size={18} />
-                  {t.connectBtn}
-                </>
-              )}
-            </button>
-
-            {txStatus.type === 'error' && (
-              <div className="alert alert-danger" style={{ marginTop: '1.5rem', textAlign: 'left' }}>
-                <XCircle size={18} style={{ flexShrink: 0, marginTop: '0.15rem' }} />
-                <span>{txStatus.message}</span>
-              </div>
-            )}
-          </div>
-        </main>
-      ) : (
-        <main style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem' }}>
-          
-          {/* Top Level Notifications */}
-          {txStatus.type !== 'idle' && (
-            <div style={{ gridColumn: 'span 12' }}>
-              {txStatus.type === 'loading' && (
-                <div className="alert alert-info">
-                  <RefreshCw size={18} className="spinner" />
-                  <span>{txStatus.message}</span>
-                </div>
-              )}
-              {txStatus.type === 'success' && (
-                <div className="alert alert-success">
-                  <CheckCircle2 size={18} style={{ flexShrink: 0, marginTop: '0.15rem' }} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <span>{txStatus.message}</span>
-                    {txStatus.hash && (
-                      <a 
-                        href={`https://stellar.expert/explorer/testnet/tx/${txStatus.hash}`} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        style={{ color: '#34d399', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '0.25rem', textDecoration: 'underline' }}
-                      >
-                        View transaction on Stellar.Expert <ExternalLink size={14} />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-              {txStatus.type === 'error' && (
-                <div className="alert alert-danger">
-                  <XCircle size={18} style={{ flexShrink: 0, marginTop: '0.15rem' }} />
-                  <span>{txStatus.message}</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Left Column: Account Details & Faucet */}
-          <div style={{ gridColumn: 'span 12', display: 'flex', flexDirection: 'column', gap: '1.5rem' }} className="col-lg-5">
-            {/* Account Card */}
-            <div className="glass-panel" style={{ padding: '1.75rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                <span className="badge badge-info" style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                  <Wallet size={12} /> {lang === 'en' ? 'Connected' : 'Bağlı'}
-                </span>
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={handleRefresh} 
-                  disabled={isRefreshing}
-                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                >
-                  <RefreshCw size={12} className={isRefreshing ? 'spinner' : ''} />
-                  {t.refreshBtn}
+          {walletAddress ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div className="wallet-chip">
+                <span className="wallet-dot" />
+                <code style={{ fontSize: '0.75rem' }} title={walletAddress}>{truncateAddr(walletAddress)}</code>
+                <button onClick={copyAddress} style={{ background: 'none', border: 'none', color: copied ? 'var(--accent-emerald)' : 'var(--text-muted)', cursor: 'pointer', padding: '0', display: 'flex', lineHeight: '1' }} title="Copy">
+                  <Copy size={11} />
                 </button>
               </div>
+              <button className="btn btn-secondary" onClick={disconnectWallet} title={t.disconnectBtn} style={{ padding: '0.35rem 0.6rem', borderRadius: '99px' }}>
+                <LogOut size={13} />
+              </button>
+            </div>
+          ) : (
+            <button className="btn btn-accent" onClick={connectWallet} disabled={isConnecting} style={{ padding: '0.45rem 1rem', borderRadius: '8px', fontSize: '0.85rem' }}>
+              {isConnecting ? <><RefreshCw size={14} className="spinner" /> Connecting...</> : <><Wallet size={14} /> {t.connectBtn}</>}
+            </button>
+          )}
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '0.25rem' }}>{lang === 'en' ? 'Public Address' : 'Kamu Adresi'}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <code style={{ fontSize: '1rem', color: '#e2e8f0', letterSpacing: '0.05em' }}>{truncateAddr(walletAddress)}</code>
-                  <button onClick={copyAddress} style={{ background: 'none', border: 'none', color: copied ? '#34d399' : '#64748b', cursor: 'pointer', display: 'inline-flex', padding: '4px', borderRadius: '4px', transition: 'color 0.2s' }} title="Copy address">
-                    <Copy size={16} />
-                  </button>
-                </div>
-                {copied && <span style={{ fontSize: '0.75rem', color: '#34d399', display: 'block', marginTop: '0.1rem' }}>{lang === 'en' ? 'Copied to clipboard!' : 'Kopyalandı!'}</span>}
-              </div>
+          <button className="navbar-burger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
+      </nav>
 
-              <div>
-                <span style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: '0.25rem' }}>{t.nativeBalance}</span>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '2.5rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em' }}>
-                    {balance !== null ? balance : '...'}
-                  </span>
-                  <span style={{ fontSize: '1.2rem', fontWeight: 600, color: '#06b6d4' }}>XLM</span>
-                </div>
-              </div>
+      {/* Mobile nav dropdown overlay */}
+      {walletAddress && (
+        <div className={`mobile-nav-overlay ${mobileMenuOpen ? 'open' : ''}`}>
+          {[
+            { tab: 'overview', icon: <Home size={14} />, label: t.dashboardTab },
+            { tab: 'invoices', icon: <LayoutDashboard size={14} />, label: t.myInvoices },
+            { tab: 'create-invoice', icon: <PlusCircle size={14} />, label: t.createTitle },
+            { tab: 'pay-invoice', icon: <CreditCard size={14} />, label: t.payTitle },
+            { tab: 'advanced', icon: <Cpu size={14} />, label: t.advancedTab },
+          ].map(({ tab, icon, label }) => (
+            <button key={tab} onClick={() => { setActiveTab(tab as any); setMobileMenuOpen(false); }}
+              className={`navbar-link ${activeTab === tab ? 'active' : ''}`} style={{ justifyContent: 'flex-start', width: '100%', padding: '0.75rem 1rem' }}>
+              {icon} {label}
+            </button>
+          ))}
+          <hr style={{ border: 'none', borderTop: '2px solid var(--border)', margin: '0.5rem 0' }} />
+          <a href="https://forms.gle/DMxtyMvZkgKaEYE59" target="_blank" rel="noreferrer" className="navbar-link"
+            style={{ justifyContent: 'flex-start', textDecoration: 'none', color: 'var(--accent-emerald)', width: '100%', padding: '0.75rem 1rem' }}>
+            {t.feedbackBtn}
+          </a>
+        </div>
+      )}
 
-              {!isAccountActivated && (
-                <div className="alert alert-warning" style={{ marginTop: '1.5rem', padding: '0.75rem', fontSize: '0.85rem', gap: '0.5rem' }}>
-                  <Info size={16} style={{ flexShrink: 0, marginTop: '0.15rem' }} />
-                  <div>
-                    {lang === 'en'
-                      ? 'Account not activated on Testnet. Click the Faucet button below to fund and activate it.'
-                      : 'Hesabınız Testnet üzerinde aktif değil. Aktifleştirmek için aşağıdaki musluğu kullanın.'}
-                  </div>
-                </div>
+      {/* ── MAIN CONTENT ── */}
+      <div className="content-wrapper">
+
+        {/* Transaction state alerts */}
+        {txStatus.type !== 'idle' && (
+          <div className={`alert ${txStatus.type === 'error' ? 'alert-danger' : txStatus.type === 'loading' ? 'alert-info' : 'alert-success'}`}>
+            {txStatus.type === 'loading' ? <RefreshCw size={16} className="spinner" /> : txStatus.type === 'success' ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+              <span>{txStatus.message}</span>
+              {txStatus.hash && (
+                <a href={`https://stellar.expert/explorer/testnet/tx/${txStatus.hash}`} target="_blank" rel="noreferrer"
+                  style={{ color: 'inherit', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.25rem', textDecoration: 'underline', fontSize: '0.8rem' }}>
+                  View on Stellar.Expert <ExternalLink size={11} />
+                </a>
               )}
             </div>
+          </div>
+        )}
 
-            {/* Smart Contract Info Card */}
-            <div className="glass-panel" style={{ padding: '1.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
-                <Cpu size={18} style={{ color: '#8b5cf6' }} />
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: 0 }}>{lang === 'en' ? 'Soroban Smart Contract' : 'Soroban Akıllı Sözleşmesi'}</h3>
-              </div>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.875rem' }}>
-                <div>
-                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>{lang === 'en' ? 'Native Token Contract ID' : 'Yerel Token Sözleşme ID'}</span>
-                  <code style={{ fontSize: '0.8rem', color: '#e2e8f0', wordBreak: 'break-all' }}>{contractId}</code>
-                </div>
+        {/* ── LANDING PAGE (Not Connected) ── */}
+        {!walletAddress ? (
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', minHeight: 'calc(100vh - 70px)', paddingBottom: '4rem' }}>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>{lang === 'en' ? 'Token Symbol' : 'Token Sembolü'}</span>
-                    <span style={{ fontWeight: 600, color: '#f8fafc' }}>
-                      {loadingContract ? '...' : contractSymbol || 'N/A'}
-                    </span>
-                  </div>
-                  <div>
-                    <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>{lang === 'en' ? 'Decimals' : 'Ondalık Hane'}</span>
-                    <span style={{ fontWeight: 600, color: '#f8fafc' }}>
-                      {loadingContract ? '...' : contractDecimals !== null ? contractDecimals : 'N/A'}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <span style={{ color: '#94a3b8', display: 'block', marginBottom: '0.15rem' }}>{t.contractBalance}</span>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
-                    <span style={{ fontSize: '1.4rem', fontWeight: 700, color: '#8b5cf6' }}>
-                      {loadingContract ? '...' : contractBalance || '0.0000'}
-                    </span>
-                    <span style={{ fontWeight: 600, color: '#a78bfa' }}>XLM</span>
-                  </div>
-                </div>
-
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#64748b' }}>
-                  <Layers size={14} />
-                  <span style={{ fontSize: '0.75rem' }}>RPC: soroban-testnet.stellar.org</span>
-                </div>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '2rem' }}>
+              <span className="testnet-badge"><span className="testnet-dot" />Testnet</span>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>· Stellar Smart Contracts</span>
             </div>
 
-            {/* Faucet Card */}
-            <div className="glass-panel" style={{ padding: '1.75rem' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 0.5rem 0' }}>{t.faucetTitle}</h3>
-              <p style={{ color: '#94a3b8', fontSize: '0.875rem', margin: '0 0 1.25rem 0', lineHeight: '1.5' }}>
-                {t.faucetDesc}
-              </p>
-              <button 
-                className="btn btn-secondary" 
-                onClick={claimFaucet} 
-                disabled={isFunding}
-                style={{ width: '100%', borderStyle: 'dashed', borderColor: 'rgba(6,182,212,0.3)', color: '#67e8f9' }}
-              >
-                {isFunding ? (
-                  <>
-                    <RefreshCw size={16} className="spinner" />
-                    {t.faucetFunding}
-                  </>
-                ) : (
-                  <>
-                    <PlusCircle size={16} />
-                    {t.faucetBtn}
-                  </>
-                )}
+            <h2 style={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0,0,0,0)', border: 0 }}>
+              {t.connectWallet}
+            </h2>
+
+            <h1 className="pulse-glow-text" style={{ fontSize: 'clamp(2.5rem, 6vw, 4.5rem)', fontStyle: 'italic', lineHeight: 1.05, marginBottom: '1.5rem', maxWidth: '850px' }}>
+              {t.title}
+            </h1>
+
+            <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', maxWidth: '560px', lineHeight: 1.6, marginBottom: '2.5rem' }}>
+              {t.subtitle}
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button className="btn btn-accent" onClick={connectWallet} disabled={isConnecting} style={{ padding: '0.85rem 2rem', fontSize: '0.95rem' }}>
+                {isConnecting ? <><RefreshCw size={16} className="spinner" /> Connecting...</> : <><Wallet size={16} /> {t.connectBtn}</>}
               </button>
+              <a href="https://stellar.org" target="_blank" rel="noreferrer" className="btn btn-secondary" style={{ padding: '0.85rem 1.75rem', fontSize: '0.95rem', textDecoration: 'none' }}>
+                Learn about Stellar <ExternalLink size={14} />
+              </a>
+            </div>
+
+            <div style={{ display: 'flex', gap: '3rem', marginTop: '5rem', flexWrap: 'wrap' }}>
+              {[{ label: 'Protocol', value: 'Soroban' }, { label: 'Avg. Fee', value: '< 0.0001 XLM' }, { label: 'Settlement', value: '~5 seconds' }].map(({ label, value }) => (
+                <div key={label}>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.25rem', fontFamily: 'var(--font-mono)' }}>{label}</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>{value}</div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Middle Column: Payment Forms (Classic vs Soroban Tabs) */}
-          <div style={{ gridColumn: 'span 12' }} className="col-lg-7">
-            <div className="glass-panel" style={{ padding: '1.75rem', minHeight: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column' }}>
-              {/* Tabs */}
-              <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '1.5rem', gap: '0.25rem', overflowX: 'auto' }}>
-                {[
-                  { key: 'create-invoice', label: t.createTitle, icon: FileText, color: '#10b981' },
-                  { key: 'pay-invoice',    label: t.payTitle,    icon: CreditCard, color: '#8b5cf6' },
-                  { key: 'dashboard',     label: t.myInvoices,    icon: LayoutDashboard, color: '#06b6d4' },
-                  { key: 'classic',       label: t.sent,       icon: Send, color: '#06b6d4' },
-                  { key: 'soroban',       label: t.contractCall,          icon: Cpu, color: '#8b5cf6' },
-                ].map(({ key, label, icon: Icon, color }) => (
-                  <button
-                    key={key}
-                    style={{
-                      background: 'none', border: 'none', whiteSpace: 'nowrap',
-                      borderBottom: activeTab === key ? `2px solid ${color}` : '2px solid transparent',
-                      color: activeTab === key ? '#f8fafc' : '#64748b',
-                      padding: '0.6rem 0.75rem', fontSize: '0.85rem', fontWeight: 600,
-                      cursor: 'pointer', transition: 'all 0.2s',
-                      display: 'flex', alignItems: 'center', gap: '0.35rem'
-                    }}
-                    onClick={() => setActiveTab(key as any)}
-                  >
-                    <Icon size={14} /> {label}
+        ) : (
+          /* ── AUTHENTICATED WORKSPACE ── */
+          <>
+            {/* PAGE 1: OVERVIEW & TRUST PROFILE */}
+            {activeTab === 'overview' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                  <div>
+                    <h2 style={{ fontSize: '2rem', fontStyle: 'italic' }}>{t.dashboardTab}</h2>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.2rem' }}>{t.subtitle}</p>
+                  </div>
+                  <button className="btn btn-secondary" onClick={handleRefresh} disabled={isRefreshing} style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+                    <RefreshCw size={13} className={isRefreshing ? 'spinner' : ''} /> {t.refreshBtn}
                   </button>
-                ))}
+                </div>
+
+                {/* Dashboard Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                  
+                  {/* Freelancer Trust Profile & Badges */}
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <span className="card-title-mono"><Award size={14} /> {t.trustProfileTitle}</span>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                      <div style={{ borderLeft: '3px solid var(--accent)', paddingLeft: '0.75rem' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>{t.totalVolume}</span>
+                        <div style={{ fontSize: '1.3rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{userVolume.toFixed(2)} XLM</div>
+                      </div>
+                      <div style={{ borderLeft: '3px solid var(--accent-purple)', paddingLeft: '0.75rem' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>{t.successfulProjects}</span>
+                        <div style={{ fontSize: '1.3rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{userCompletedCount}</div>
+                      </div>
+                    </div>
+
+                    <hr style={{ border: 'none', borderTop: '2px solid var(--border)' }} />
+
+                    {/* Trust Badges */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>{t.badgesTitle}</span>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                        
+                        <div className={`sticker-badge ${isPioneerUnlocked ? 'unlocked' : 'locked'}`} title={t.stellarPioneerDesc}>
+                          <span style={{ fontSize: '1.2rem', marginBottom: '0.2rem' }}>🚀</span>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 800 }}>{t.stellarPioneer}</span>
+                        </div>
+
+                        <div className={`sticker-badge ${isDelivererUnlocked ? 'unlocked' : 'locked'}`} title={t.fastDelivererDesc}>
+                          <span style={{ fontSize: '1.2rem', marginBottom: '0.2rem' }}>⚡</span>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 800 }}>{t.fastDeliverer}</span>
+                        </div>
+
+                        <div className={`sticker-badge ${isTrustAnchorUnlocked ? 'unlocked' : 'locked'}`} title={t.trustAnchorDesc}>
+                          <span style={{ fontSize: '1.2rem', marginBottom: '0.2rem' }}>🛡️</span>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 800 }}>{t.trustAnchor}</span>
+                        </div>
+
+                        <div className={`sticker-badge ${isVolumeUnlocked ? 'unlocked' : 'locked'}`} title={t.highVolumeDesc}>
+                          <span style={{ fontSize: '1.2rem', marginBottom: '0.2rem' }}>💎</span>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 800 }}>{t.highVolume}</span>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Leaderboard (Active User Competition) */}
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <span className="card-title-mono"><Trophy size={14} style={{ color: 'var(--accent)' }} /> {t.leaderboardTitle}</span>
+                    
+                    <div className="custom-table-container" style={{ border: 'none' }}>
+                      <table className="custom-table">
+                        <thead>
+                          <tr>
+                            <th style={{ padding: '0.5rem' }}>{t.rank}</th>
+                            <th style={{ padding: '0.5rem' }}>{t.tester}</th>
+                            <th style={{ padding: '0.5rem', textAlign: 'right' }}>{t.completedCount}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {getDynamicLeaderboard().slice(0, 5).map((entry, idx) => {
+                            const isMe = entry.address === walletAddress;
+                            return (
+                              <tr key={idx} style={{ background: isMe ? 'rgba(245,197,24,0.06)' : 'transparent' }}>
+                                <td style={{ padding: '0.5rem', fontWeight: 800, color: idx === 0 ? 'var(--accent)' : 'inherit' }}>
+                                  #{idx + 1}
+                                </td>
+                                <td style={{ padding: '0.5rem' }}>
+                                  <code style={{ fontSize: '0.72rem' }}>
+                                    {truncateAddr(entry.address)} {isMe ? ' (Me)' : ''}
+                                  </code>
+                                </td>
+                                <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
+                                  {entry.completed}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Balances & Activation */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                  <div className="card">
+                    <span className="card-title-mono">{t.nativeBalance}</span>
+                    <div style={{ fontSize: '2.2rem', fontWeight: 900, fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                      {balance ?? '—'} <span style={{ fontSize: '1rem', color: 'var(--accent)', fontWeight: 800 }}>XLM</span>
+                    </div>
+                  </div>
+
+                  <div className="card">
+                    <span className="card-title-mono">{t.contractBalance}</span>
+                    <div style={{ fontSize: '2.2rem', fontWeight: 900, fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'baseline', gap: '0.5rem' }}>
+                      {loadingContract ? '—' : contractBalance || '0.0000'} <span style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>{contractSymbol || 'XLM'}</span>
+                    </div>
+                  </div>
+
+                  {!isAccountActivated && (
+                    <div className="card" style={{ background: 'rgba(245,68,68,0.02)', borderColor: 'rgba(245,68,68,0.2)' }}>
+                      <span className="card-title-mono" style={{ color: '#ef4444' }}>Account Inactive</span>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem', lineHeight: '1.5' }}>Your wallet is inactive. Funding activates it.</p>
+                      <button className="btn btn-accent" onClick={claimFaucet} style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}>Request Faucet XLM</button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick Guide */}
+                <div className="card">
+                  <span className="card-title-mono"><Info size={14} /> {t.guideTitle}</span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                    {[{ title: t.step1Title, desc: t.step1Desc }, { title: t.step2Title, desc: t.step2Desc }, { title: t.step3Title, desc: t.step3Desc }].map(({ title, desc }, idx) => (
+                      <div key={idx}>
+                        <strong style={{ color: '#fff', display: 'block', marginBottom: '0.25rem' }}>{title}</strong>
+                        <p>{desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Faucet Box */}
+                <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
+                  <div>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{t.faucetTitle}</h3>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{t.faucetDesc}</p>
+                  </div>
+                  <button className="btn btn-secondary" onClick={claimFaucet} disabled={isFunding} style={{ borderStyle: 'dashed', borderColor: 'var(--accent)', color: 'var(--accent)' }}>
+                    {isFunding ? <><RefreshCw size={13} className="spinner" /> {t.faucetFunding}</> : <><PlusCircle size={13} /> {t.faucetBtn}</>}
+                  </button>
+                </div>
+
               </div>
+            )}
 
-              {/* Tab: Create Invoice */}
-              {activeTab === 'create-invoice' && (
-                <InvoiceCreator
-                  walletAddress={walletAddress!}
-                  rpcServer={rpcServer}
-                  server={server}
-                  escrowContractId={ESCROW_CONTRACT_ID}
-                  nativeAssetContractId={NATIVE_ASSET_CONTRACT_ID}
-                  onInvoiceCreated={() => setRefreshTrigger(t => t + 1)}
-                  t={t}
-                />
-              )}
-
-              {/* Tab: Pay Invoice */}
-              {activeTab === 'pay-invoice' && (
-                <InvoicePayment
-                  walletAddress={walletAddress!}
-                  rpcServer={rpcServer}
-                  server={server}
-                  escrowContractId={ESCROW_CONTRACT_ID}
-                  onSuccess={() => loadAllData(walletAddress!)}
-                  t={t}
-                />
-              )}
-
-              {/* Tab: My Invoices Dashboard */}
-              {activeTab === 'dashboard' && (
+            {/* PAGE 2: INVOICES DASHBOARD */}
+            {activeTab === 'invoices' && (
+              <div className="card">
                 <FreelancerDashboard
                   walletAddress={walletAddress!}
                   rpcServer={rpcServer}
@@ -848,49 +880,106 @@ function App() {
                   onSuccess={() => loadAllData(walletAddress!)}
                   t={t}
                 />
-              )}
+              </div>
+            )}
 
-              {/* Tab: Classic Horizon Payment */}
-              {activeTab === 'classic' && (
-                <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Send size={18} style={{ color: '#06b6d4' }} />
-                    Send Classic Horizon Payment
-                  </h3>
-                  <form onSubmit={handleSendPayment} style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, justifyContent: 'space-between' }}>
-                    <div>
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="recipient">Recipient Stellar Address</label>
-                        <input id="recipient" type="text" className="form-input" placeholder="G..."
-                          value={recipient} onChange={(e) => setRecipient(e.target.value.trim())} required />
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="amount">Amount (XLM)</label>
-                          <input id="amount" type="number" step="any" min="0.0000001" className="form-input" placeholder="0.0"
-                            value={amount} onChange={(e) => setAmount(e.target.value)} required />
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="memo">Memo (Optional)</label>
-                          <input id="memo" type="text" maxLength={28} className="form-input" placeholder="e.g. Invoice #42"
-                            value={memo} onChange={(e) => setMemo(e.target.value)} />
-                        </div>
-                      </div>
+            {/* PAGE 3: CREATE INVOICE */}
+            {activeTab === 'create-invoice' && (
+              <div className="card">
+                <InvoiceCreator
+                  walletAddress={walletAddress!}
+                  rpcServer={rpcServer}
+                  server={server}
+                  escrowContractId={ESCROW_CONTRACT_ID}
+                  nativeAssetContractId={NATIVE_ASSET_CONTRACT_ID}
+                  onInvoiceCreated={() => setRefreshTrigger(t => t + 1)}
+                  t={t}
+                />
+              </div>
+            )}
+
+            {/* PAGE 4: PAY INVOICE */}
+            {activeTab === 'pay-invoice' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div className="card">
+                  <InvoicePayment
+                    walletAddress={walletAddress!}
+                    rpcServer={rpcServer}
+                    server={server}
+                    escrowContractId={ESCROW_CONTRACT_ID}
+                    onSuccess={(id) => {
+                      loadAllData(walletAddress!);
+                      handleSearchLookup(id);
+                    }}
+                    t={t}
+                  />
+                </div>
+
+                {/* Recent Searches history block (Local Caching) */}
+                {searchHistory.length > 0 && (
+                  <div className="card">
+                    <span className="card-title-mono"><FileText size={14} /> {t.recentSearches}</span>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                      {searchHistory.map((id) => (
+                        <button
+                          key={id}
+                          onClick={() => {
+                            // Find and lookup
+                            const input = document.getElementById('search-invoice-input') as HTMLInputElement;
+                            if (input) {
+                              input.value = id;
+                              const form = input.form;
+                              if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                            }
+                          }}
+                          className="btn btn-secondary"
+                          style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}
+                        >
+                          #{id}
+                        </button>
+                      ))}
                     </div>
-                    <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '1.5rem' }}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* PAGE 5: ADVANCED ACTIONS */}
+            {activeTab === 'advanced' && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                
+                {/* Classic Horizon Send */}
+                <div className="card">
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Send size={16} /> Send Classic Payment
+                  </h3>
+                  <form onSubmit={handleSendPayment} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="recipient">Recipient Address</label>
+                      <input id="recipient" type="text" className="form-input" placeholder="G..."
+                        value={recipient} onChange={(e) => setRecipient(e.target.value.trim())} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="amount">Amount (XLM)</label>
+                      <input id="amount" type="number" step="any" min="0.0000001" className="form-input" placeholder="0.0"
+                        value={amount} onChange={(e) => setAmount(e.target.value)} required />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="memo">Memo (Optional)</label>
+                      <input id="memo" type="text" maxLength={28} className="form-input" placeholder="e.g. Invoice #42"
+                        value={memo} onChange={(e) => setMemo(e.target.value)} />
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}
                       disabled={txStatus.type === 'loading' || !recipient || !amount}>
-                      <Send size={16} /> Send Classic Transaction
+                      <Send size={15} /> Send Transaction
                     </button>
                   </form>
                 </div>
-              )}
 
-              {/* Tab: Soroban Vault */}
-              {activeTab === 'soroban' && (
-                <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Cpu size={18} style={{ color: '#8b5cf6' }} />
-                    Advanced Vault Dashboard
+                {/* Soroban Vault */}
+                <div className="card">
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Cpu size={16} /> Advanced Vault Dashboard
                   </h3>
                   <VaultDashboard
                     walletAddress={walletAddress}
@@ -899,127 +988,12 @@ function App() {
                     onSuccess={() => loadAllData(walletAddress)}
                   />
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* Bottom Row: Recent Transaction History */}
-          <div style={{ gridColumn: 'span 12' }}>
-            <div className="glass-panel" style={{ padding: '1.75rem' }}>
-               <h3 style={{ fontSize: '1.2rem', fontWeight: 700, margin: '0 0 1.25rem 0' }}>{t.recentPayments}</h3>
-              
-              {loadingHistory ? (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '3rem 0', gap: '0.5rem', color: '#94a3b8' }}>
-                  <RefreshCw size={18} className="spinner" />
-                  {t.loadingHistory}
-                </div>
-              ) : history.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '3rem 0', color: '#475569' }}>
-                  {t.noPayments}
-                </div>
-              ) : (
-                <div className="custom-table-container">
-                  <table className="custom-table">
-                    <thead>
-                      <tr>
-                        <th>{t.direction}</th>
-                        <th>{t.amount}</th>
-                        <th>{t.address}</th>
-                        <th>{t.timestamp}</th>
-                        <th>{t.txHash}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {history.map((tx) => {
-                        const isSent = tx.from === walletAddress;
-                        return (
-                          <tr key={tx.id}>
-                            <td>
-                              {tx.type === 'Contract Call' ? (
-                                <span 
-                                  className="badge" 
-                                  style={{
-                                    background: 'rgba(139, 92, 246, 0.08)',
-                                    color: '#a78bfa',
-                                    border: '1px solid rgba(139, 92, 246, 0.15)',
-                                    gap: '0.25rem'
-                                  }}
-                                >
-                                  <Cpu size={12} />
-                                  {t.contractCall}
-                                </span>
-                              ) : (
-                                <span 
-                                  className="badge" 
-                                  style={{
-                                    background: isSent ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
-                                    color: isSent ? '#f87171' : '#34d399',
-                                    border: `1px solid ${isSent ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)'}`,
-                                    gap: '0.25rem'
-                                  }}
-                                >
-                                  {isSent ? (
-                                    <>
-                                      <ArrowUpRight size={12} />
-                                      {t.sent}
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ArrowDownLeft size={12} />
-                                      {t.received}
-                                    </>
-                                  )}
-                                </span>
-                              )}
-                            </td>
-                            <td style={{ fontWeight: 600, color: tx.type === 'Contract Call' ? '#a78bfa' : (isSent ? '#f8fafc' : '#34d399') }}>
-                              {isNaN(parseFloat(tx.amount)) ? tx.amount : `${isSent ? '-' : '+'}${parseFloat(tx.amount).toFixed(4)} XLM`}
-                            </td>
-                            <td style={{ fontSize: '0.85rem' }}>
-                              <code title={isSent ? tx.to : tx.from}>
-                                {truncateAddr(isSent ? tx.to : tx.from)}
-                              </code>
-                            </td>
-                            <td style={{ color: '#64748b' }}>
-                              {formatDate(tx.created_at)}
-                            </td>
-                            <td>
-                              <a 
-                                href={`https://stellar.expert/explorer/testnet/tx/${tx.transaction_hash}`} 
-                                target="_blank" 
-                                rel="noreferrer"
-                                style={{ color: '#06b6d4', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
-                              >
-                                View <ExternalLink size={12} />
-                              </a>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-
-        </main>
-      )}
-
-      {/* Grid adjustment media queries */}
-      <style>{`
-        @media (min-width: 992px) {
-          main {
-            align-items: stretch;
-          }
-          .col-lg-5 {
-            grid-column: span 5 !important;
-          }
-          .col-lg-7 {
-            grid-column: span 7 !important;
-          }
-        }
-      `}</style>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

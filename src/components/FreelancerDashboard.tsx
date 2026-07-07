@@ -4,7 +4,7 @@ import {
   Address, nativeToScVal, scValToNative
 } from '@stellar/stellar-sdk';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
-import { LayoutDashboard, RefreshCw, FileText, TrendingUp, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, RefreshCw, FileText, TrendingUp, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle2, Download } from 'lucide-react';
 
 interface Invoice {
   id: number; freelancer: string; client: string;
@@ -35,6 +35,34 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
   const [stats, setStats] = useState({ total: 0, pending: 0, funded: 0, earned: 0 });
   const [actionStatus, setActionStatus] = useState<{ id: number | null; action: 'cancel' | 'release' | null; loading: boolean; error: string | null }>({ id: null, action: null, loading: false, error: null });
   const [uniqueTestersCount, setUniqueTestersCount] = useState(0);
+
+  const exportToCSV = () => {
+    const invoicesToExport = activeSubTab === 'sent' ? sentInvoices : receivedInvoices;
+    if (invoicesToExport.length === 0) return;
+
+    const headers = ['Invoice ID', 'Role', 'Freelancer Address', 'Client Address', 'Amount (XLM)', 'Description', 'Status'];
+    const rows = invoicesToExport.map(inv => [
+      inv.id,
+      activeSubTab === 'sent' ? 'Freelancer' : 'Client',
+      inv.freelancer,
+      inv.client,
+      inv.amount,
+      `"${inv.description.replace(/"/g, '""')}"`,
+      inv.status
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `stellarpay_invoices_${activeSubTab}_${walletAddress.slice(0, 8)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   const fetchInvoices = useCallback(async () => {
     if (!walletAddress || escrowContractId.includes('YOUR_')) return;
@@ -207,9 +235,19 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
             </span>
           )}
         </div>
-        <button className="btn btn-secondary" onClick={fetchInvoices} disabled={loading} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
-          <RefreshCw size={14} className={loading ? 'spinner' : ''} /> {t.refreshBtn}
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button 
+            className="btn btn-secondary" 
+            onClick={exportToCSV} 
+            disabled={activeInvoices.length === 0} 
+            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: 'var(--accent)', borderColor: 'var(--accent)' }}
+          >
+            <Download size={14} /> {t.exportCsvBtn}
+          </button>
+          <button className="btn btn-secondary" onClick={fetchInvoices} disabled={loading} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
+            <RefreshCw size={14} className={loading ? 'spinner' : ''} /> {t.refreshBtn}
+          </button>
+        </div>
       </div>
 
       {/* Role Toggle Selector */}

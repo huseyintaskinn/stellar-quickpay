@@ -2,7 +2,7 @@ export const translations = {
   en: {
     // App.tsx
     title: "StellarPay - Cross-Border Freelancer Payments",
-    subtitle: "Journey to Mastery • Level 4 Green Belt",
+    subtitle: "Journey to Mastery • Level 5 Blue Belt",
     connectWallet: "Connect Your Wallet",
     selectWalletDesc: "Connect your wallet on testnet to continue. The multi-wallet adapter supports Freighter, Albedo, and xBull wallets.",
     connectBtn: "Connect Wallet",
@@ -78,11 +78,35 @@ export const translations = {
     releasing: "Releasing...",
     cancelling: "Cancelling...",
     refreshBtn: "Refresh",
+    
+    // Level 5 Additions
+    dashboardTab: "Dashboard",
+    advancedTab: "Advanced",
+    leaderboardTitle: "Top Active Testers",
+    badgesTitle: "Trust Badges",
+    trustProfileTitle: "Freelancer Trust Profile",
+    exportCsvBtn: "Export to CSV",
+    totalVolume: "Total Volume",
+    successfulProjects: "Successful Escrows",
+    recentSearches: "Recent Searches",
+    rank: "Rank",
+    tester: "Tester Address",
+    completedCount: "Completed",
+    
+    // Badges description
+    stellarPioneer: "Stellar Pioneer",
+    stellarPioneerDesc: "Created your first escrow invoice",
+    fastDeliverer: "Fast Deliverer",
+    fastDelivererDesc: "Released payment in under 24 hours",
+    trustAnchor: "Trust Anchor",
+    trustAnchorDesc: "Successfully completed 5+ invoices",
+    highVolume: "High Volume",
+    highVolumeDesc: "Completed transactions of 500+ XLM"
   },
   tr: {
     // App.tsx
     title: "StellarPay - Sınır Ötesi Freelancer Ödemeleri",
-    subtitle: "Mastery Yolculuğu • Seviye 4 Yeşil Kuşak",
+    subtitle: "Mastery Yolculuğu • Seviye 5 Mavi Kuşak",
     connectWallet: "Cüzdanınızı Bağlayın",
     selectWalletDesc: "Devam etmek için cüzdanınızı testnet'e bağlayın. Çoklu cüzdan adaptörü Freighter, Albedo ve xBull cüzdanlarını destekler.",
     connectBtn: "Cüzdanı Bağla",
@@ -158,5 +182,29 @@ export const translations = {
     releasing: "Aktarılıyor...",
     cancelling: "İptal Ediliyor...",
     refreshBtn: "Yenile",
+    
+    // Level 5 Additions
+    dashboardTab: "Kontrol Paneli",
+    advancedTab: "Gelişmiş",
+    leaderboardTitle: "En Aktif Test Kullanıcıları",
+    badgesTitle: "Güven Rozetleri",
+    trustProfileTitle: "Freelancer Güven Profili",
+    exportCsvBtn: "CSV Olarak İndir",
+    totalVolume: "Toplam İşlem Hacmi",
+    successfulProjects: "Başarılı Emanetler",
+    recentSearches: "Son Aramalar",
+    rank: "Sıra",
+    tester: "Tester Adresi",
+    completedCount: "Tamamlanan",
+    
+    // Badges description
+    stellarPioneer: "Stellar Öncüsü",
+    stellarPioneerDesc: "İlk emanet faturanı başarıyla oluşturdun",
+    fastDeliverer: "Hızlı Teslimatçı",
+    fastDelivererDesc: "Ödemeyi 24 saatten kısa sürede çektin",
+    trustAnchor: "Güven Kaynağı",
+    trustAnchorDesc: "5+ faturayı hiçbir sorunsuz başarıyla tamamladın",
+    highVolume: "Yüksek Hacim",
+    highVolumeDesc: "500+ XLM üzerinde işlem tamamladın"
   }
 };

@@ -14,8 +14,8 @@ describe('StellarPay dApp', () => {
     const connectHeading = screen.getByRole('heading', { name: /Connect Your Wallet/i });
     expect(connectHeading).toBeInTheDocument();
     
-    const connectButton = screen.getByRole('button', { name: /Connect Wallet/i });
-    expect(connectButton).toBeInTheDocument();
+    const connectButtons = screen.getAllByRole('button', { name: /Connect Wallet/i });
+    expect(connectButtons.length).toBeGreaterThan(0);
   });
 
   it('should show the correct network indicator as Testnet', () => {
