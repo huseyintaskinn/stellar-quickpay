@@ -1,12 +1,12 @@
-# StellarPay - Cross-Border Freelancer Payments (Level 4 Green Belt Submission)
+# StellarPay - Cross-Border Freelancer Payments (Level 5 Blue Belt Submission)
 
-Welcome to **StellarPay** (formerly *Stellar QuickPay*), a production-ready, glassmorphic Stellar dApp upgraded to satisfy the **Level 4 - Green Belt Submission** requirements for the **Stellar Journey to Mastery** builder program.
+Welcome to **StellarPay** (formerly *Stellar QuickPay*), a production-ready, glassmorphic Stellar dApp upgraded to satisfy the **Level 5 - Blue Belt Submission** requirements for the **Stellar Journey to Mastery** builder program.
 
 StellarPay enables freelancers around the globe to easily generate secure invoices, and allows clients to fund payments that are safely locked on-chain in a custom Soroban Escrow smart contract until work is completed and released by the freelancer.
 
 ---
 
-## 🟢 Level 4 - Green Belt Submission Details
+## 🔵 Level 5 - Blue Belt Submission Details
 
 | Requirement | Value / Link |
 | :--- | :--- |
@@ -15,48 +15,43 @@ StellarPay enables freelancers around the globe to easily generate secure invoic
 | **Escrow payment Transaction Hash** | [`21280ba3292852dea4b2efee528553cb70c55f6e73b15bfc230935e622de4abb`](https://stellar.expert/explorer/testnet/tx/21280ba3292852dea4b2efee528553cb70c55f6e73b15bfc230935e622de4abb) |
 | **User Feedback Link (Google Form)** | [Google Form Link](https://forms.gle/DMxtyMvZkgKaEYE59) |
 | **User Feedback Responses (Google Sheets)** | [Google Sheets Link](https://docs.google.com/spreadsheets/d/1dUZSbEjbv271jrsgxIE_9C5mWJLiTgE0ZD8oY9WkP40/edit?usp=sharing) |
-| **User Testing Status** | **11 Active Users** (100% Goal Reached! 🎉) |
+| **User Testing Campaign Status** | **50+ Active Users Goal** (In Progress / Campaign Active 🎉) |
 | **Demo Video Link (1-2 mins)** | [`Google Drive Demo Video`](https://drive.google.com/file/d/154AXYImlzgxtTlkZKssIB-_SN80mU3qo/view?usp=sharing) |
+| **Key Level 5 Features** | Postmodern Neo-Brutalist Glassmorphism UI, On-Chain Web3 Freelancer Portfolio (Trust Profile), Gamified Badges, Dynamic Leaderboard, Stateful Demo Mode, i18n, CSV Export |
 
 ---
 
-## 🏗️ Level 4 Architecture & Features
+## 🏗️ Level 5 Architecture & Features
 
-This level transforms the project from a simple wallet vault into a **scalable, production-ready MVP with real user onboarding, analytics, and robust business logic**.
+This level elevates the project from a simple functional MVP to a **scalable, highly polished, production-grade application featuring interactive tutorials, custom stateful simulations, gamification, and verifiable trust profiles**.
 
-### 1. Advanced Soroban Escrow Contract (`contracts/escrow`)
-We developed and deployed a custom Soroban Escrow Smart Contract written in Rust:
-- **On-chain State Machine:** Manages invoice lifecycles through explicit statuses: `Pending` (Created) $\rightarrow$ `Funded` (Paid & Locked) $\rightarrow$ `Released` (Withdrawn) or `Cancelled` (Pending invoice cancelled by creator).
-- **Inter-Contract Token Transfers:** Integrates with the official Stellar Asset Contract (SAC) to safely transfer and lock client funds in the contract, and release them to the freelancer upon successful work delivery.
-- **Robust Event Logging:** Emits `invoice_created`, `invoice_paid`, `payment_released`, and `invoice_cancelled` events for real-time frontend syncing.
-- **On-chain Validations:** Restricts payment to the designated client and release/cancellation to the designated freelancer.
+### 1. Web3 Freelancer Portfolio (Trust Profile)
+StellarPay automatically parses on-chain contract transactions to generate a **verifiable freelancer trust profile**:
+- **On-chain Reputation:** Displays total volume successfully transacted, total completed escrows, and successful profile statistics.
+- **On-chain Badge Achievements:** Unlocks physical sticker-style Web3 badges based on smart contract state transitions.
 
-### 2. Double-Sided Invoice Dashboard
-The frontend has been completely revamped with a dedicated **My Invoices** panel featuring role-based views:
-- **Sent Invoices (Freelancer View):** Tracks invoices you have generated. If the status is `Pending`, you can trigger a **Cancel Invoice** action. If the status is `Funded`, you can click **Release Payment** directly on the card to claim your funds.
-- **Received Invoices (Client View):** Displays invoices billed to you. Easily search by invoice ID in the **Pay Invoice** tab to view details and pay.
+### 2. Gamified Achievement Badges
+We introduced a cüzdan (wallet) based gamification system to incentivize tester interactions:
+- 🟢 **Stellar Pioneer:** Unlocked upon successfully creating your first smart contract invoice.
+- ⚡ **Fast Deliverer:** Unlocked for fast payment settlements.
+- 🛡️ **Trust Anchor:** Awarded for completing 5+ invoices without any contract cancellations.
+- 💰 **High Volume:** Awarded for transacting large amounts of testnet XLM.
 
-### 3. User Onboarding System
-To facilitate smooth onboarding for the required **10+ real testers**, we added:
-- **Quick Start Guide:** A responsive, glassmorphic 3-step guide detailing how to set up Freighter, request test tokens, and interact with invoices.
-- **Friendbot Auto-Activator:** A one-click **Request Faucet XLM** button that automatically activates and funds newly connected testnet wallets.
-- **Feedback Collection:** A visible "Share Feedback 💬" button prompting testers to leave feedback after testing.
+### 3. Dynamic Leaderboard
+To drive user engagement during the campaign, a **top freelancer leaderboard** visualizes mock ranking records of active participant addresses, celebrating top testers.
 
-#### 📈 User Testing & Feedback Campaign (11 Active Testers)
-We successfully completed our user testing campaign with **11 active testers** (including the developer) interacting with the smart contracts on Testnet and providing structured feedback:
-- **100% Flow Success:** All 11 users successfully created, funded, paid, and released/withdrew escrowed payments on-chain.
-- **Structured Feedback:** User feedback was collected via a Google Form and logged in a public Google Sheets spreadsheet.
-- **Summary of User Insights:**
-  - *Strengths:* Testers highly praised the real-time transaction updates (visual loader showing contract call progress) and the simplicity of the invoice creation/escrow flow.
-  - *Areas of Improvement:* Several testers suggested adding separate pages/routing and a more comprehensive dashboard styling to elevate the user experience beyond a single-page prototype layout.
+### 4. Postmodern Neo-Brutalist Glassmorphic UI
+We crafted a beautiful, high-contrast, responsive visual system:
+- **Cyber-Grid texture:** Gold-tinted mesh overlay adds visual texture.
+- **Glass tabs & containers:** Sleek card boundaries with exact button height alignment.
+- **Responsive adaptors:** Automatically wraps columns and aligns text nicely for mobile viewports.
 
-### 4. Real-time Analytics & Event Tracking
-- **Umami Analytics:** Integrated privacy-focused, open-source analytics to track visitor numbers and general interface engagement.
-- **Custom Event Logs:** Real-time state synchronization when transactions succeed on-chain, automatically updating wallet balances and histories without requiring page reloads.
+### 5. Stateful Demo Mode & Local Databases
+We built an offline, stateful sandbox powered by `localStorage`:
+- **DB Persistence:** Mock transactions are persisted under `stellar_mock_invoices`, allowing users to create an invoice in the Creator tab, query it by ID in the Payment tab, lock funds, and release it in the Dashboard, maintaining state coherently across tab-switches and page reloads.
 
-### 5. Advanced CI/CD Pipeline
-- **Dual Rust Workspace Tests:** Configured GitHub Actions to run unit tests for both `vault` and `escrow` Rust contracts concurrently.
-- **Deployment Automations:** Builds WASM files, generates keys, funds them, deploys to testnet, and publishes the React build to GitHub Pages.
+### 6. Interactive Tutorial & On-Screen Tips
+A step-by-step guided walkthrough automatically coordinates tab transitions and renders glowing visual tip boxes (Turkish/English) guiding users on inputs to enter.
 
 ---
 
