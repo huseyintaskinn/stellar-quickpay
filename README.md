@@ -17,6 +17,7 @@ StellarPay enables freelancers around the globe to easily generate secure invoic
 | **User Feedback Responses (Google Sheets)** | [Google Sheets Link](https://docs.google.com/spreadsheets/d/1dUZSbEjbv271jrsgxIE_9C5mWJLiTgE0ZD8oY9WkP40/edit?usp=sharing) |
 | **User Testing Campaign Status** | **50+ Active Users Goal** (In Progress / Campaign Active 🎉) |
 | **Demo Video Link (1-2 mins)** | [`Google Drive Demo Video`](https://drive.google.com/file/d/154AXYImlzgxtTlkZKssIB-_SN80mU3qo/view?usp=sharing) |
+| **Pitch Deck (Level 5)** | [`PITCH_DECK.md`](PITCH_DECK.md) |
 | **Key Level 5 Features** | Postmodern Neo-Brutalist Glassmorphism UI, On-Chain Web3 Freelancer Portfolio (Trust Profile), Gamified Badges, Dynamic Leaderboard, Stateful Demo Mode, i18n, CSV Export |
 
 ---
@@ -94,7 +95,38 @@ Open `http://localhost:5173` in your browser.
 
 ---
 
-## 📸 Level 4 Submission Proof Screenshots
+## 📈 User Feedback & Iterative Improvements (Level 5 Deliverable)
+
+We gathered structured feedback from our testnet user campaign (11+ active testers) and iteratively resolved the core usability issues and suggestions. Below is the mapping of user requests to concrete codebase improvements, backed by Git commit history:
+
+### 1. Unified Dashboard vs. Segmented Routing
+- **User Feedback:** *"The single-page view feels cluttered; it would be better to separate invoice creation, payment, and history into clean tabs or pages."*
+- **Action Taken:** Refactored the dashboard layout into five cleanly separated views: Overview (Trust Profile & Leaderboard), Invoices List, Create Invoice, Pay Invoice, and Advanced Vault.
+- **Git Commit Link:** Implemented in commit [`452659b`](https://github.com/huseyintaskinn/stellar-quickpay/commit/452659b).
+
+### 2. Aesthetically Premium Cyber-Themes
+- **User Feedback:** *"The UI looks like a standard dark theme; a custom Web3 cyber aesthetic with more glow and glassmorphism would feel much more premium."*
+- **Action Taken:** Designed a Neo-Brutalist Glassmorphism aesthetic including a customized grid background mesh, follow-cursor yellow glow, and custom borders.
+- **Git Commit Link:** Implemented in commits [`452659b`](https://github.com/huseyintaskinn/stellar-quickpay/commit/452659b) and [`8a709ed`](https://github.com/huseyintaskinn/stellar-quickpay/commit/8a709ed).
+
+### 3. Stateful Local Simulator for Onboarding
+- **User Feedback:** *"I want to test the entire lifecycle, but deploying/paying takes time on testnet and sometimes wallet extensions are hard to set up on mobile."*
+- **Action Taken:** Developed an offline, stateful Demo Mode that automatically coordinates active tab switches and uses a synchronized `localStorage` database. Testers can create, lookup, fund, and release invoices instantly.
+- **Git Commit Link:** Implemented in commits [`1ddab7c`](https://github.com/huseyintaskinn/stellar-quickpay/commit/1ddab7c), [`fe642b1`](https://github.com/huseyintaskinn/stellar-quickpay/commit/fe642b1), and [`8a709ed`](https://github.com/huseyintaskinn/stellar-quickpay/commit/8a709ed).
+
+### 4. Interactive Help Guides & Tips
+- **User Feedback:** *"I get lost on what address to use during creation or what ID to look up during payment in demo mode."*
+- **Action Taken:** Added bilingual pulsing help cards directly inside the creation, payment, and list views, specifying exactly which mock address and ID to copy-paste.
+- **Git Commit Link:** Implemented in commit [`fe642b1`](https://github.com/huseyintaskinn/stellar-quickpay/commit/fe642b1).
+
+### 5. Multi-Language (i18n) Support
+- **User Feedback:** *"The application text is mostly in English; it should support Turkish localization since we are testing locally."*
+- **Action Taken:** Added a comprehensive `i18n` localization dictionary (`src/i18n.ts`) supporting seamless English/Turkish toggles for all pages, tooltips, buttons, logs, and simulated transaction outcomes.
+- **Git Commit Link:** Implemented in commits [`1ddab7c`](https://github.com/huseyintaskinn/stellar-quickpay/commit/1ddab7c), [`fe642b1`](https://github.com/huseyintaskinn/stellar-quickpay/commit/fe642b1), and [`fd357a8`](https://github.com/huseyintaskinn/stellar-quickpay/commit/fd357a8).
+
+---
+
+## 📸 Level 5 Submission Proof Screenshots
 
 ### 1. Double-Sided Invoice Dashboard (Sent & Received Tabs)
 
