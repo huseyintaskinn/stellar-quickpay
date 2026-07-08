@@ -747,7 +747,7 @@ function App() {
           <button onClick={() => setLang(lang === 'en' ? 'tr' : 'en')} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>language</span> {lang === 'en' ? 'Türkçe' : 'English'}
           </button>
-          <a href="https://forms.gle/DMxtyMvZkgKaEYE59" target="_blank" rel="noreferrer" className="navbar-link"
+          <a href="https://forms.gle/N1FTH5XFYRHiTUyS8" target="_blank" rel="noreferrer" className="navbar-link"
             style={{ textDecoration: 'none', color: 'var(--accent)', padding: '0.4rem' }}>
             {t.feedbackBtn}
           </a>
@@ -1248,7 +1248,7 @@ function App() {
               <a href="https://github.com/huseyintaskinn" target="_blank" rel="noreferrer" className="footer-link" style={{ textDecoration: 'none' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>person</span> GitHub Profile <ExternalLink size={11} />
               </a>
-              <a href="https://forms.gle/DMxtyMvZkgKaEYE59" target="_blank" rel="noreferrer" className="footer-link" style={{ textDecoration: 'none', color: 'var(--accent)' }}>
+              <a href="https://forms.gle/N1FTH5XFYRHiTUyS8" target="_blank" rel="noreferrer" className="footer-link" style={{ textDecoration: 'none', color: 'var(--accent)' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>comment</span> Share Feedback <ExternalLink size={11} />
               </a>
             </div>
