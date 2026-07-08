@@ -152,7 +152,17 @@ export const translations = {
     tutorialStepTitle: "Demo Hint",
     creatorStepGuide: "Enter client address: 'GDEMO55TESTNETUSERPAYMENTSFORFREELANCERS12345', amount: '50', description: 'Logo Design', and click Create Invoice.",
     paymentStepGuide: "Paste your newly created Invoice ID (e.g. 1) and click Lookup, then click Pay.",
-    listStepGuide: "You have received the payment! Now, click 'Release Payment' (Ödemeyi Al) to claim the locked XLM into your wallet."
+    listStepGuide: "You have received the payment! Now, click 'Release Payment' (Ödemeyi Al) to claim the locked XLM into your wallet.",
+    protocolLabel: "Protocol",
+    avgFeeLabel: "Avg. Fee",
+    settlementLabel: "Settlement",
+    demoSimulating: "Simulating transaction in Demo Mode...",
+    demoSimulatedSuccess: "Demo Mode Success: Transaction simulated successfully!",
+    footerDesc: "StellarPay is a next-generation Web3 invoicing and escrow payment system powered by Stellar Soroban smart contracts. Build trust globally with transparent on-chain freelancer profiles.",
+    quickNav: "Quick Navigation",
+    devCode: "Developer & Code",
+    createdBy: "Created by",
+    builtOn: "Built on Stellar Testnet"
   },
   tr: {
     // App.tsx
@@ -307,6 +317,16 @@ export const translations = {
     tutorialStepTitle: "Demo İpucu",
     creatorStepGuide: "Aşağıdaki alanları doldurun. Müşteri adresi: 'GDEMO55TESTNETUSERPAYMENTSFORFREELANCERS12345', tutar: '50', açıklama: 'Logo Tasarımı' yazın ve Fatura Oluştur butonuna basın.",
     paymentStepGuide: "Yeni oluşturduğunuz Fatura ID'sini (örn. 1) yazıp Sorgula'ya basın, ardından Ödeme Yap butonuna tıklayın.",
-    listStepGuide: "Ödeme yapıldı ve para akitte kilitlendi! Şimdi faturanın altındaki 'Ödemeyi Al' butonuna tıklayarak XLM bakiyesini cüzdanınıza çekin."
+    listStepGuide: "Ödeme yapıldı ve para akitte kilitlendi! Şimdi faturanın altındaki 'Ödemeyi Al' butonuna tıklayarak XLM bakiyesini cüzdanınıza çekin.",
+    protocolLabel: "Protokol",
+    avgFeeLabel: "Ort. Ücret",
+    settlementLabel: "Mutabakat",
+    demoSimulating: "Demo Modunda işlem simüle ediliyor...",
+    demoSimulatedSuccess: "Demo Modu Başarılı: İşlem başarıyla simüle edildi!",
+    footerDesc: "StellarPay, Stellar Soroban akıllı sözleşmeleriyle desteklenen yeni nesil bir Web3 faturalandırma ve emanet ödeme sistemidir. Şeffaf zincir üstü profillerle küresel çapta güven inşa edin.",
+    quickNav: "Hızlı Erişim",
+    devCode: "Geliştirici & Kod",
+    createdBy: "Geliştiren:",
+    builtOn: "Stellar Testnet üzerinde geliştirildi"
   }
 };

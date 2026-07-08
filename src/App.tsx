@@ -799,7 +799,7 @@ function App() {
             </div>
 
             <div className="hero-stats-row" style={{ display: 'flex', gap: '3rem', marginTop: '5rem', flexWrap: 'wrap' }}>
-              {[{ label: 'Protocol', value: 'Soroban' }, { label: 'Avg. Fee', value: '< 0.0001 XLM' }, { label: 'Settlement', value: '~5 seconds' }].map(({ label, value }) => (
+              {[{ label: t.protocolLabel, value: 'Soroban' }, { label: t.avgFeeLabel, value: '< 0.0001 XLM' }, { label: t.settlementLabel, value: lang === 'en' ? '~5 seconds' : '~5 saniye' }].map(({ label, value }) => (
                 <div key={label}>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.25rem', fontFamily: 'var(--font-mono)' }}>{label}</div>
                   <div style={{ fontSize: '1.1rem', fontWeight: 800 }}>{value}</div>
@@ -1171,7 +1171,11 @@ function App() {
                     <div className="form-group">
                       <label className="form-label" htmlFor="amount">{t.amountXlm}</label>
                       <input id="amount" type="number" step="any" min="0.0000001" className="form-input" placeholder="0.0"
-                        value={amount} onChange={(e) => setAmount(e.target.value)} required />
+                        value={amount} onChange={(e) => {
+                          const val = e.target.value;
+                          if (parseFloat(val) < 0) return;
+                          setAmount(val);
+                        }} required />
                     </div>
                     <div className="form-group">
                       <label className="form-label" htmlFor="memo">{t.memoOptional}</label>
@@ -1212,23 +1216,23 @@ function App() {
           <div className="footer-col" style={{ flex: '1.5 1 300px' }}>
             <span className="navbar-logo-text" style={{ fontSize: '1.1rem', display: 'block', marginBottom: '0.75rem' }}>StellarPay</span>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: '1.6', maxWidth: '320px' }}>
-              StellarPay is a next-generation Web3 invoicing and escrow payment system powered by Stellar Soroban smart contracts. Build trust globally with transparent on-chain freelancers profiles.
+              {t.footerDesc}
             </p>
           </div>
           
           <div className="footer-col" style={{ flex: '1 1 200px' }}>
-            <h4 style={{ fontSize: '0.85rem', marginBottom: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>Quick Navigation</h4>
+            <h4 style={{ fontSize: '0.85rem', marginBottom: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>{t.quickNav}</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <button onClick={() => { if(walletAddress) { setActiveTab('overview'); } else { connectWallet(); } }} className="footer-link">Dashboard</button>
-              <button onClick={() => { if(walletAddress) { setActiveTab('invoices'); } else { connectWallet(); } }} className="footer-link">My Invoices</button>
-              <button onClick={() => { if(walletAddress) { setActiveTab('create-invoice'); } else { connectWallet(); } }} className="footer-link">Create Invoice</button>
-              <button onClick={() => { if(walletAddress) { setActiveTab('pay-invoice'); } else { connectWallet(); } }} className="footer-link">Pay Invoice</button>
+              <button onClick={() => { if(walletAddress) { setActiveTab('overview'); } else { connectWallet(); } }} className="footer-link">{t.dashboardTab}</button>
+              <button onClick={() => { if(walletAddress) { setActiveTab('invoices'); } else { connectWallet(); } }} className="footer-link">{t.myInvoices}</button>
+              <button onClick={() => { if(walletAddress) { setActiveTab('create-invoice'); } else { connectWallet(); } }} className="footer-link">{t.createTitle}</button>
+              <button onClick={() => { if(walletAddress) { setActiveTab('pay-invoice'); } else { connectWallet(); } }} className="footer-link">{t.payTitle}</button>
             </div>
           </div>
           
           <div className="footer-col" style={{ flex: '1 1 250px' }}>
-            <h4 style={{ fontSize: '0.85rem', marginBottom: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>Developer & Code</h4>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>Created by <strong>Hüseyin Taşkın</strong></p>
+            <h4 style={{ fontSize: '0.85rem', marginBottom: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#fff' }}>{t.devCode}</h4>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>{t.createdBy} <strong>Hüseyin Taşkın</strong></p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <a href="https://github.com/huseyintaskinn/stellar-quickpay" target="_blank" rel="noreferrer" className="footer-link" style={{ textDecoration: 'none' }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>folder</span> GitHub Repository <ExternalLink size={11} />
@@ -1245,7 +1249,7 @@ function App() {
         <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '1.5rem 0 1rem 0' }} />
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           <span>&copy; {new Date().getFullYear()} StellarPay. All rights reserved.</span>
-          <span>Built on Stellar Testnet</span>
+          <span>{t.builtOn}</span>
         </div>
       </footer>
     </div>

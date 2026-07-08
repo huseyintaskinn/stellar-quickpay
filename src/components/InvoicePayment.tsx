@@ -66,15 +66,19 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
     try {
       if (walletAddress.startsWith('GDEMO')) {
         const idNum = Number(invoiceId);
-        if (idNum === 1 || idNum === 2 || idNum === 3 || idNum === 4 || idNum === 5) {
-          setInvoice({
-            id: idNum,
-            freelancer: idNum <= 3 ? walletAddress : 'GCZDX5E7RT7BTTA6VJC7YYHOYQYNHRDGEDB3O32K74VC52LC7XFCEZTH',
-            client: idNum <= 3 ? 'GBGHSPQEIZGJOJJDJYG5VVIPU7THJQU2Z4B6V5VF5IHUQ2SOLIRITDQS' : walletAddress,
-            amount: (idNum * 50).toFixed(4),
-            description: idNum === 1 ? 'Website Redesign Proposal' : idNum === 2 ? 'Logo Design Delivery' : idNum === 3 ? 'Smart Contract Audit' : idNum === 4 ? 'Content Writing Phase 1' : 'React Mobile App Setup',
-            status: idNum === 1 ? 'Pending' : idNum === 2 ? 'Funded' : idNum === 3 ? 'Released' : idNum === 4 ? 'Pending' : 'Released'
-          });
+        
+        const rawSaved = localStorage.getItem('stellar_mock_invoices');
+        const mockInvoices = rawSaved ? JSON.parse(rawSaved) : [
+          { id: 1, freelancer: walletAddress, client: 'GBGHSPQEIZGJOJJDJYG5VVIPU7THJQU2Z4B6V5VF5IHUQ2SOLIRITDQS', amount: '50.0000', description: 'Website Redesign Proposal', status: 'Pending' },
+          { id: 2, freelancer: walletAddress, client: 'GAJOE3OBM5CDRG75LLO732V3ZZB5LPT6VIWBOAHCYXW57DTYOOGCLD6B', amount: '150.0000', description: 'Logo Design Delivery', status: 'Funded' },
+          { id: 3, freelancer: walletAddress, client: 'GD7UFEHE4J3RKQ25ZDGGJ4VBUWATV645UUMN4JYDIBMSFCSFOWXSQ6LM', amount: '85.0000', description: 'Smart Contract Audit', status: 'Released' },
+          { id: 4, freelancer: 'GCZDX5E7RT7BTTA6VJC7YYHOYQYNHRDGEDB3O32K74VC52LC7XFCEZTH', client: walletAddress, amount: '100.0000', description: 'Content Writing Phase 1', status: 'Pending' },
+          { id: 5, freelancer: 'GC74KHZR7ASDTNQL37RDWNH3CDXW6W5BBPIJHCYQ3THFHXAHTXINKBCU', client: walletAddress, amount: '250.0000', description: 'React Mobile App Setup', status: 'Released' }
+        ];
+
+        const match = mockInvoices.find((inv: any) => inv.id === idNum);
+        if (match) {
+          setInvoice(match);
         } else {
           setTxStatus({ type: 'error', message: t.invoiceNotFound });
         }
@@ -116,9 +120,22 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
     setTxStatus({ type: 'loading', message: t.lookingUp });
     try {
       if (walletAddress.startsWith('GDEMO')) {
-        setTxStatus({ type: 'loading', message: 'Simulating transaction in Demo Mode...' });
+        setTxStatus({ type: 'loading', message: t.demoSimulating || 'Simulating transaction in Demo Mode...' });
         await new Promise(r => setTimeout(r, 1500));
-        setTxStatus({ type: 'success', message: 'Demo Mode Success: Transaction simulated successfully!' });
+        
+        const rawSaved = localStorage.getItem('stellar_mock_invoices');
+        if (rawSaved) {
+          let mockInvoices = JSON.parse(rawSaved);
+          mockInvoices = mockInvoices.map((inv: any) => {
+            if (inv.id === invoice.id) {
+              return { ...inv, status: action === 'pay_invoice' ? 'Funded' : 'Released' };
+            }
+            return inv;
+          });
+          localStorage.setItem('stellar_mock_invoices', JSON.stringify(mockInvoices));
+        }
+
+        setTxStatus({ type: 'success', message: t.demoSimulatedSuccess || 'Demo Mode Success: Transaction simulated successfully!' });
         setInvoice(prev => prev ? { ...prev, status: action === 'pay_invoice' ? 'Funded' : 'Released' } : null);
         if (onSuccess) onSuccess(invoice.id.toString());
         return;
@@ -205,7 +222,12 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
 
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
         <input type="number" id="search-invoice-input" className="form-input" placeholder={t.enterInvoiceId}
-          value={invoiceId} onChange={e => setInvoiceId(e.target.value)} />
+          min="1"
+          value={invoiceId} onChange={e => {
+            const val = e.target.value;
+            if (val !== '' && Number(val) < 1) return;
+            setInvoiceId(val);
+          }} />
         <button className="btn btn-secondary" onClick={fetchInvoice} disabled={loadingInvoice || !invoiceId}
           style={{ whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
           {loadingInvoice ? <RefreshCw size={16} className="spinner" /> : <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>search</span>}

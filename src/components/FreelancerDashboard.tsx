@@ -23,8 +23,11 @@ interface FreelancerDashboardProps {
   demoStep?: number;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  Pending: 'var(--accent)', Funded: 'var(--accent)', Released: 'var(--accent)', Cancelled: '#64748b',
+const STATUS_CONFIG = {
+  Pending: { color: 'var(--accent)', bg: 'rgba(245, 197, 24, 0.08)', border: 'rgba(245, 197, 24, 0.2)' },
+  Funded:  { color: 'var(--accent)', bg: 'rgba(245, 197, 24, 0.12)', border: 'rgba(245, 197, 24, 0.25)' },
+  Released:{ color: 'var(--accent)', bg: 'rgba(245, 197, 24, 0.16)', border: 'rgba(245, 197, 24, 0.3)' },
+  Cancelled:{ color: '#64748b', bg: 'rgba(255, 255, 255, 0.03)', border: 'rgba(255, 255, 255, 0.1)' }
 };
 
 export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
@@ -71,23 +74,36 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
     setLoading(true);
     try {
       if (walletAddress.startsWith('GDEMO')) {
-        const mockSent: Invoice[] = [
+        const rawSaved = localStorage.getItem('stellar_mock_invoices');
+        const mockInvoices = rawSaved ? JSON.parse(rawSaved) : [
           { id: 1, freelancer: walletAddress, client: 'GBGHSPQEIZGJOJJDJYG5VVIPU7THJQU2Z4B6V5VF5IHUQ2SOLIRITDQS', amount: '50.0000', description: 'Website Redesign Proposal', status: 'Pending' },
           { id: 2, freelancer: walletAddress, client: 'GAJOE3OBM5CDRG75LLO732V3ZZB5LPT6VIWBOAHCYXW57DTYOOGCLD6B', amount: '150.0000', description: 'Logo Design Delivery', status: 'Funded' },
-          { id: 3, freelancer: walletAddress, client: 'GD7UFEHE4J3RKQ25ZDGGJ4VBUWATV645UUMN4JYDIBMSFCSFOWXSQ6LM', amount: '85.0000', description: 'Smart Contract Audit', status: 'Released' }
-        ];
-        const mockReceived: Invoice[] = [
+          { id: 3, freelancer: walletAddress, client: 'GD7UFEHE4J3RKQ25ZDGGJ4VBUWATV645UUMN4JYDIBMSFCSFOWXSQ6LM', amount: '85.0000', description: 'Smart Contract Audit', status: 'Released' },
           { id: 4, freelancer: 'GCZDX5E7RT7BTTA6VJC7YYHOYQYNHRDGEDB3O32K74VC52LC7XFCEZTH', client: walletAddress, amount: '100.0000', description: 'Content Writing Phase 1', status: 'Pending' },
           { id: 5, freelancer: 'GC74KHZR7ASDTNQL37RDWNH3CDXW6W5BBPIJHCYQ3THFHXAHTXINKBCU', client: walletAddress, amount: '250.0000', description: 'React Mobile App Setup', status: 'Released' }
         ];
-        setSentInvoices(mockSent);
-        setReceivedInvoices(mockReceived);
-        setUniqueTestersCount(8);
-        const earned = mockSent.filter(i => i.status === 'Released').reduce((s, i) => s + parseFloat(i.amount), 0);
+
+        if (!rawSaved) {
+          localStorage.setItem('stellar_mock_invoices', JSON.stringify(mockInvoices));
+        }
+
+        const sent = mockInvoices.filter((inv: any) => inv.freelancer === walletAddress);
+        const received = mockInvoices.filter((inv: any) => inv.client === walletAddress);
+
+        const testersSet = new Set<string>();
+        mockInvoices.forEach((inv: any) => {
+          testersSet.add(inv.freelancer);
+          testersSet.add(inv.client);
+        });
+
+        setSentInvoices(sent);
+        setReceivedInvoices(received);
+        setUniqueTestersCount(testersSet.size + 9);
+        const earned = sent.filter((i: any) => i.status === 'Released').reduce((s: any, i: any) => s + parseFloat(i.amount), 0);
         setStats({
-          total: mockSent.length,
-          pending: mockSent.filter(i => i.status === 'Pending').length,
-          funded: mockSent.filter(i => i.status === 'Funded').length,
+          total: sent.length,
+          pending: sent.filter((i: any) => i.status === 'Pending').length,
+          funded: sent.filter((i: any) => i.status === 'Funded').length,
           earned,
         });
         setLoading(false);
@@ -190,23 +206,21 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
     try {
       if (walletAddress.startsWith('GDEMO')) {
         await new Promise(r => setTimeout(r, 1000));
-        setActionStatus({ id: null, action: null, loading: false, error: null });
         
-        const updateStatus = (list: Invoice[]): Invoice[] =>
-          list.map(inv => inv.id === id ? { ...inv, status: action === 'cancel_invoice' ? 'Cancelled' : 'Released' } : inv);
-        
-        setSentInvoices(prev => {
-          const updated = updateStatus(prev);
-          const earned = updated.filter(i => i.status === 'Released').reduce((s, i) => s + parseFloat(i.amount), 0);
-          setStats({
-            total: updated.length,
-            pending: updated.filter(i => i.status === 'Pending').length,
-            funded: updated.filter(i => i.status === 'Funded').length,
-            earned,
+        const rawSaved = localStorage.getItem('stellar_mock_invoices');
+        if (rawSaved) {
+          let mockInvoices = JSON.parse(rawSaved);
+          mockInvoices = mockInvoices.map((inv: any) => {
+            if (inv.id === id) {
+              return { ...inv, status: action === 'cancel_invoice' ? 'Cancelled' : 'Released' };
+            }
+            return inv;
           });
-          return updated;
-        });
-        setReceivedInvoices(prev => updateStatus(prev));
+          localStorage.setItem('stellar_mock_invoices', JSON.stringify(mockInvoices));
+        }
+
+        setActionStatus({ id: null, action: null, loading: false, error: null });
+        fetchInvoices();
         if (onSuccess) onSuccess();
         return;
       }
@@ -267,32 +281,35 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
   return (
     <div>
       <div className="dashboard-header-row">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '20px' }}>dashboard</span>
           <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{t.myInvoices}</h3>
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
           {uniqueTestersCount > 0 && (
             <span style={{
-              fontSize: '0.7rem', fontWeight: 600, padding: '0.2rem 0.6rem', borderRadius: '12px',
-              marginLeft: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+              fontSize: '0.8rem', fontWeight: 700, padding: '0.4rem 0.8rem', borderRadius: '8px',
+              display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
               background: 'rgba(245,197,24,0.08)',
               color: 'var(--accent)',
-              border: '1px solid rgba(245,197,24,0.2)'
+              border: '1px solid rgba(245,197,24,0.3)',
+              boxSizing: 'border-box',
+              height: '34px',
+              lineHeight: '1'
             }}>
-              <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>groups</span>
-              {uniqueTestersCount} {t.activeUsersBadge} {uniqueTestersCount >= 50 ? <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>celebration</span> : `/ 50 ${t.testerGoal}`}
+              <span className="material-symbols-outlined" style={{ fontSize: '15px' }}>groups</span>
+              {uniqueTestersCount} {t.activeUsersBadge} {uniqueTestersCount >= 50 ? <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>celebration</span> : `/ 50 ${t.testerGoal}`}
             </span>
           )}
-        </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button 
             className="btn btn-secondary" 
             onClick={exportToCSV} 
             disabled={activeInvoices.length === 0} 
-            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: 'var(--accent)', borderColor: 'var(--accent)' }}
+            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', color: 'var(--accent)', borderColor: 'var(--accent)', height: '34px', boxSizing: 'border-box' }}
           >
             <Download size={14} /> {t.exportCsvBtn}
           </button>
-          <button className="btn btn-secondary" onClick={fetchInvoices} disabled={loading} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}>
+          <button className="btn btn-secondary" onClick={fetchInvoices} disabled={loading} style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', height: '34px', boxSizing: 'border-box' }}>
             <RefreshCw size={14} className={loading ? 'spinner' : ''} /> {t.refreshBtn}
           </button>
         </div>
@@ -311,12 +328,13 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
       )}
 
       {/* Role Toggle Selector */}
-      <div style={{ display: 'flex', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '0.25rem', marginBottom: '1.5rem', gap: '0.25rem' }}>
+      <div style={{ display: 'flex', background: 'rgba(2, 3, 6, 0.65)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '0.3rem', marginBottom: '1.5rem', gap: '0.3rem' }}>
         <button
           style={{
-            flex: 1, padding: '0.5rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', border: 'none', transition: 'all 0.2s',
-            background: activeSubTab === 'sent' ? 'rgba(245,197,24,0.15)' : 'transparent',
-            color: activeSubTab === 'sent' ? 'var(--accent)' : '#64748b',
+            flex: 1, padding: '0.6rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.25s ease',
+            background: activeSubTab === 'sent' ? 'rgba(245,197,24,0.08)' : 'transparent',
+            border: `1px solid ${activeSubTab === 'sent' ? 'rgba(245,197,24,0.25)' : 'transparent'}`,
+            color: activeSubTab === 'sent' ? 'var(--accent)' : 'var(--text-secondary)',
           }}
           onClick={() => setActiveSubTab('sent')}
         >
@@ -325,9 +343,10 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
         </button>
         <button
           style={{
-            flex: 1, padding: '0.5rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', border: 'none', transition: 'all 0.2s',
-            background: activeSubTab === 'received' ? 'rgba(245,197,24,0.15)' : 'transparent',
-            color: activeSubTab === 'received' ? 'var(--accent)' : '#64748b',
+            flex: 1, padding: '0.6rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.25s ease',
+            background: activeSubTab === 'received' ? 'rgba(245,197,24,0.08)' : 'transparent',
+            border: `1px solid ${activeSubTab === 'received' ? 'rgba(245,197,24,0.25)' : 'transparent'}`,
+            color: activeSubTab === 'received' ? 'var(--accent)' : 'var(--text-secondary)',
           }}
           onClick={() => setActiveSubTab('received')}
         >
@@ -343,12 +362,38 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
             { label: t.totalSent, value: stats.total, icon: 'outbox' },
             { label: t.pending, value: stats.pending, icon: 'pending_actions' },
             { label: t.funded, value: stats.funded, icon: 'lock' },
-            { label: t.earnedXlm, value: stats.earned.toFixed(2), icon: 'payments' },
+            { label: t.earnedXlm, value: stats.earned.toFixed(2) + ' XLM', icon: 'payments' },
           ].map(({ label, value, icon }) => (
-            <div key={label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '0.875rem', textAlign: 'center' }}>
-              <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '18px', marginBottom: '0.25rem' }}>{icon}</span>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)' }}>{value}</div>
-              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{label}</div>
+            <div key={label} style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.002) 100%)',
+              border: '1px solid rgba(245,197,24,0.12)',
+              borderRadius: '14px',
+              padding: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.85rem',
+              position: 'relative',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+              overflow: 'hidden'
+            }}>
+              <div style={{ position: 'absolute', top: '8px', left: '8px', width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent)', opacity: 0.6 }} />
+              <div style={{
+                background: 'rgba(245,197,24,0.06)',
+                border: '1px solid rgba(245,197,24,0.15)',
+                borderRadius: '10px',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '20px' }}>{icon}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, textAlign: 'left' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--font-mono)', lineHeight: '1.2' }}>{value}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.2rem' }}>{label}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -359,10 +404,36 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
             { label: t.awaitingPay, value: receivedInvoices.filter(i => i.status === 'Pending').length, icon: 'pending_actions' },
             { label: t.paidFunded, value: receivedInvoices.filter(i => i.status === 'Funded' || i.status === 'Released').length, icon: 'lock' },
           ].map(({ label, value, icon }) => (
-            <div key={label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '0.875rem', textAlign: 'center' }}>
-              <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '18px', marginBottom: '0.25rem' }}>{icon}</span>
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)' }}>{value}</div>
-              <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{label}</div>
+            <div key={label} style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.002) 100%)',
+              border: '1px solid rgba(245,197,24,0.12)',
+              borderRadius: '14px',
+              padding: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.85rem',
+              position: 'relative',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+              overflow: 'hidden'
+            }}>
+              <div style={{ position: 'absolute', top: '8px', left: '8px', width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent)', opacity: 0.6 }} />
+              <div style={{
+                background: 'rgba(245,197,24,0.06)',
+                border: '1px solid rgba(245,197,24,0.15)',
+                borderRadius: '10px',
+                width: '40px',
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '20px' }}>{icon}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, textAlign: 'left' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)', fontFamily: 'var(--font-mono)', lineHeight: '1.2' }}>{value}</div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '0.2rem' }}>{label}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -380,41 +451,42 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
           <p>{t.noPayments}</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {activeInvoices.map(inv => {
             const cardStatusLabel = inv.status === 'Pending' ? t.pending
               : inv.status === 'Funded' ? t.funded
               : inv.status === 'Released' ? t.released
               : t.cancelled;
+            const statusConf = STATUS_CONFIG[inv.status as keyof typeof STATUS_CONFIG] || { color: '#94a3b8', bg: 'rgba(255,255,255,0.02)', border: 'rgba(255,255,255,0.08)' };
             return (
-              <div key={inv.id} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>{t.invoiceIdLabel} #{inv.id}</span>
-                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', background: 'rgba(255,255,255,0.05)', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
+              <div key={inv.id} className="invoice-card">
+                <div className="invoice-card-left">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{t.invoiceIdLabel} #{inv.id}</span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--accent)', background: 'rgba(245,197,24,0.06)', border: '1px solid rgba(245,197,24,0.12)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>
                       {activeSubTab === 'sent' ? t.toClient : t.fromFreelancer}
                     </span>
                   </div>
-                  <div style={{ fontWeight: 600, color: '#f1f5f9', fontSize: '0.95rem', marginTop: '0.2rem' }}>{inv.description}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
+                  <div style={{ fontWeight: 800, color: '#f1f5f9', fontSize: '1rem', marginTop: '0.25rem' }}>{inv.description}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
                     {activeSubTab === 'sent'
                       ? `Client: ${inv.client.slice(0, 10)}...${inv.client.slice(-8)}`
                       : `Freelancer: ${inv.freelancer.slice(0, 10)}...${inv.freelancer.slice(-8)}`
                     }
                   </div>
                 </div>
-                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
-                  <div style={{ fontSize: '1rem', fontWeight: 800, color: '#06b6d4' }}>{inv.amount} XLM</div>
+                <div className="invoice-card-right">
+                  <div style={{ fontSize: '1.1rem', fontWeight: 900, color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>{inv.amount} XLM</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {activeSubTab === 'sent' && inv.status === 'Pending' && (
                       <button
                         onClick={() => handleInvoiceAction(inv.id, 'cancel_invoice')}
                         disabled={actionStatus.id === inv.id && actionStatus.loading}
                         style={{
-                          padding: '0.2rem 0.5rem', fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)',
+                          padding: '0.25rem 0.5rem', fontSize: '0.7rem', background: 'rgba(239,68,68,0.1)',
                           border: '1px solid rgba(239,68,68,0.25)', borderRadius: '6px', color: '#f87171',
                           cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem',
-                          transition: 'all 0.2s'
+                          transition: 'all 0.2s', fontWeight: 700
                         }}
                       >
                         {actionStatus.id === inv.id && actionStatus.action === 'cancel' && actionStatus.loading ? (
@@ -430,10 +502,10 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
                         onClick={() => handleInvoiceAction(inv.id, 'release_payment')}
                         disabled={actionStatus.id === inv.id && actionStatus.loading}
                         style={{
-                          padding: '0.2rem 0.5rem', fontSize: '0.7rem', background: 'rgba(16,185,129,0.1)',
-                          border: '1px solid rgba(16,185,129,0.25)', borderRadius: '6px', color: '#34d399',
+                          padding: '0.25rem 0.5rem', fontSize: '0.7rem', background: 'rgba(245,197,24,0.1)',
+                          border: '1px solid rgba(245,197,24,0.3)', borderRadius: '6px', color: 'var(--accent)',
                           cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem',
-                          transition: 'all 0.2s'
+                          transition: 'all 0.2s', fontWeight: 700
                         }}
                       >
                         {actionStatus.id === inv.id && actionStatus.action === 'release' && actionStatus.loading ? (
@@ -444,8 +516,16 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
                         {t.releaseBtn}
                       </button>
                     )}
-                    <span style={{ fontSize: '0.7rem', fontWeight: 600, color: STATUS_COLORS[inv.status] || '#94a3b8',
-                      background: `${STATUS_COLORS[inv.status] || '#94a3b8'}18`, padding: '0.15rem 0.5rem', borderRadius: '12px', border: `1px solid ${STATUS_COLORS[inv.status] || '#94a3b8'}30` }}>
+                    <span style={{ 
+                      fontSize: '0.7rem', 
+                      fontWeight: 800, 
+                      color: statusConf.color,
+                      background: statusConf.bg, 
+                      padding: '0.2rem 0.6rem', 
+                      borderRadius: '12px', 
+                      border: `1px solid ${statusConf.border}`,
+                      fontFamily: 'var(--font-mono)'
+                    }}>
                       {cardStatusLabel}
                     </span>
                   </div>

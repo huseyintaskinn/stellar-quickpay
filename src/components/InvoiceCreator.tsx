@@ -39,13 +39,35 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
 
     try {
       if (walletAddress.startsWith('GDEMO')) {
-        setStatus({ type: 'loading', message: 'Simulating invoice creation in Demo Mode...' });
+        setStatus({ type: 'loading', message: t.demoSimulating || 'Simulating invoice creation in Demo Mode...' });
         await new Promise(r => setTimeout(r, 1500));
-        const simulatedId = (Math.floor(Math.random() * 900) + 10).toString();
+        
+        const rawSaved = localStorage.getItem('stellar_mock_invoices');
+        let mockInvoices = rawSaved ? JSON.parse(rawSaved) : [
+          { id: 1, freelancer: walletAddress, client: 'GBGHSPQEIZGJOJJDJYG5VVIPU7THJQU2Z4B6V5VF5IHUQ2SOLIRITDQS', amount: '50.0000', description: 'Website Redesign Proposal', status: 'Pending' },
+          { id: 2, freelancer: walletAddress, client: 'GAJOE3OBM5CDRG75LLO732V3ZZB5LPT6VIWBOAHCYXW57DTYOOGCLD6B', amount: '150.0000', description: 'Logo Design Delivery', status: 'Funded' },
+          { id: 3, freelancer: walletAddress, client: 'GD7UFEHE4J3RKQ25ZDGGJ4VBUWATV645UUMN4JYDIBMSFCSFOWXSQ6LM', amount: '85.0000', description: 'Smart Contract Audit', status: 'Released' },
+          { id: 4, freelancer: 'GCZDX5E7RT7BTTA6VJC7YYHOYQYNHRDGEDB3O32K74VC52LC7XFCEZTH', client: walletAddress, amount: '100.0000', description: 'Content Writing Phase 1', status: 'Pending' },
+          { id: 5, freelancer: 'GC74KHZR7ASDTNQL37RDWNH3CDXW6W5BBPIJHCYQ3THFHXAHTXINKBCU', client: walletAddress, amount: '250.0000', description: 'React Mobile App Setup', status: 'Released' }
+        ];
+
+        const nextId = mockInvoices.length > 0 ? Math.max(...mockInvoices.map((inv: any) => inv.id)) + 1 : 1;
+        const newInvoice = {
+          id: nextId,
+          freelancer: walletAddress,
+          client: clientAddress,
+          amount: parseFloat(amount).toFixed(4),
+          description: description,
+          status: 'Pending'
+        };
+
+        mockInvoices.push(newInvoice);
+        localStorage.setItem('stellar_mock_invoices', JSON.stringify(mockInvoices));
+
         setStatus({
           type: 'success',
           message: t.invoiceCreatedSuccess,
-          invoiceId: simulatedId
+          invoiceId: nextId.toString()
         });
         setClientAddress('');
         setAmount('');
@@ -192,7 +214,11 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
           <div className="form-group">
             <label className="form-label">{t.amountLabel}</label>
             <input type="number" step="any" min="0.0001" className="form-input" placeholder="0.0"
-              value={amount} onChange={e => setAmount(e.target.value)} required />
+              value={amount} onChange={e => {
+                const val = e.target.value;
+                if (parseFloat(val) < 0) return;
+                setAmount(val);
+              }} required />
           </div>
           <div className="form-group">
             <label className="form-label">{t.descriptionLabel}</label>

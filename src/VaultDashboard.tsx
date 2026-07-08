@@ -269,8 +269,13 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
                 type="number" 
                 className="form-input" 
                 placeholder="0.0" 
+                min="0"
                 value={depositAmount} 
-                onChange={e => setDepositAmount(e.target.value)} 
+                onChange={e => {
+                  const val = e.target.value;
+                  if (parseFloat(val) < 0) return;
+                  setDepositAmount(val);
+                }}
                 style={{ flex: 1, minWidth: 0 }}
               />
               <button 
@@ -294,8 +299,13 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
                 type="number" 
                 className="form-input" 
                 placeholder="0.0" 
+                min="0"
                 value={withdrawAmount} 
-                onChange={e => setWithdrawAmount(e.target.value)} 
+                onChange={e => {
+                  const val = e.target.value;
+                  if (parseFloat(val) < 0) return;
+                  setWithdrawAmount(val);
+                }}
                 style={{ flex: 1, minWidth: 0 }}
               />
               <button 

@@ -1,9 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Fira+Code:wght@400;600;700&display=swap');
 
-/* ─── Premium Web3 Tokens ────────────────────────────────────── */
 :root {
   --bg:            #020306;
-  --bg-dots:       rgba(255, 255, 255, 0.007);
+  --bg-dots:       rgba(245, 197, 24, 0.012);
   --surface:       rgba(255, 255, 255, 0.015);
   --surface-solid: #08090f;
   --border:        rgba(255, 255, 255, 0.07);
@@ -47,11 +46,13 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   position: relative;
+  /* Premium Cyber Grid + Dot Matrix Background Texture */
   background-image: 
-    radial-gradient(var(--bg-dots) 1.5px, transparent 1.5px), 
+    linear-gradient(to right, rgba(245, 197, 24, 0.008) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(245, 197, 24, 0.008) 1px, transparent 1px),
     radial-gradient(var(--bg-dots) 1.5px, transparent 1.5px);
-  background-size: 32px 32px;
-  background-position: 0 0, 16px 16px;
+  background-size: 40px 40px, 40px 40px, 20px 20px;
+  background-position: 0 0, 0 0, 10px 10px;
   display: flex;
   flex-direction: column;
 }
@@ -201,9 +202,9 @@ code, pre {
   align-items: center;
   justify-content: space-between;
   padding: 0 2.5rem;
-  background: rgba(4, 5, 8, 0.55);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  background: rgba(2, 3, 6, 0.6) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
   border-bottom: 1px solid var(--border);
   z-index: 1000;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -842,6 +843,69 @@ code, pre {
     justify-content: center !important;
     gap: 1.5rem !important;
     margin-top: 3.5rem !important;
+    width: 100% !important;
+  }
+}
+
+/* Hide native number input spinners on Chrome, Safari, Edge, and Firefox */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Responsive Premium Invoice Cards */
+.invoice-card {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  border-radius: 12px !important;
+  padding: 1.25rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  transition: all 0.25s ease !important;
+  gap: 1.25rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.invoice-card:hover {
+  border-color: rgba(245, 197, 24, 0.2) !important;
+  background: rgba(245, 197, 24, 0.015) !important;
+}
+
+.invoice-card-left {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+.invoice-card-right {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  text-align: right !important;
+  flex-shrink: 0 !important;
+}
+
+@media (max-width: 600px) {
+  .invoice-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 1.25rem !important;
+  }
+  .invoice-card-right {
+    align-items: flex-start !important;
+    text-align: left !important;
+    border-top: 1px dashed rgba(255, 255, 255, 0.08) !important;
+    padding-top: 0.75rem !important;
     width: 100% !important;
   }
 }
