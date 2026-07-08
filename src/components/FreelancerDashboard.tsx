@@ -4,7 +4,7 @@ import {
   Address, nativeToScVal, scValToNative
 } from '@stellar/stellar-sdk';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
-import { RefreshCw, FileText, TrendingUp, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle2, Download } from 'lucide-react';
+import { RefreshCw, ArrowUpRight, ArrowDownLeft, Trash2, CheckCircle2, Download } from 'lucide-react';
 
 interface Invoice {
   id: number; freelancer: string; client: string;
@@ -19,14 +19,16 @@ interface FreelancerDashboardProps {
   refreshTrigger: number;
   onSuccess?: () => void;
   t: any;
+  isDemoActive?: boolean;
+  demoStep?: number;
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  Pending: '#f59e0b', Funded: '#06b6d4', Released: '#10b981', Cancelled: '#ef4444',
+  Pending: 'var(--accent)', Funded: 'var(--accent)', Released: 'var(--accent)', Cancelled: '#64748b',
 };
 
 export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
-  walletAddress, rpcServer, server, escrowContractId, refreshTrigger, onSuccess, t
+  walletAddress, rpcServer, server, escrowContractId, refreshTrigger, onSuccess, t, isDemoActive, demoStep
 }) => {
   const [sentInvoices, setSentInvoices] = useState<Invoice[]>([]);
   const [receivedInvoices, setReceivedInvoices] = useState<Invoice[]>([]);
@@ -277,7 +279,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
               border: '1px solid rgba(245,197,24,0.2)'
             }}>
               <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>groups</span>
-              {uniqueTestersCount} {t.activeUsersBadge} {uniqueTestersCount >= 10 ? <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>celebration</span> : `/ 10 ${t.testerGoal}`}
+              {uniqueTestersCount} {t.activeUsersBadge} {uniqueTestersCount >= 50 ? <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>celebration</span> : `/ 50 ${t.testerGoal}`}
             </span>
           )}
         </div>
@@ -296,28 +298,40 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
         </div>
       </div>
 
+      {isDemoActive && demoStep === 3 && (
+        <div className="alert alert-info" style={{ animation: 'pulse 2s infinite', border: '1px solid var(--accent)', background: 'rgba(245,197,24,0.05)', color: 'var(--accent)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 800 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>lightbulb</span>
+            <span>{t.tutorialStepTitle}</span>
+          </div>
+          <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>
+            {t.listStepGuide}
+          </span>
+        </div>
+      )}
+
       {/* Role Toggle Selector */}
       <div style={{ display: 'flex', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '0.25rem', marginBottom: '1.5rem', gap: '0.25rem' }}>
         <button
           style={{
             flex: 1, padding: '0.5rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', border: 'none', transition: 'all 0.2s',
-            background: activeSubTab === 'sent' ? 'rgba(16,185,129,0.15)' : 'transparent',
-            color: activeSubTab === 'sent' ? '#34d399' : '#64748b',
+            background: activeSubTab === 'sent' ? 'rgba(245,197,24,0.15)' : 'transparent',
+            color: activeSubTab === 'sent' ? 'var(--accent)' : '#64748b',
           }}
           onClick={() => setActiveSubTab('sent')}
         >
-          <ArrowUpRight size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+          <ArrowUpRight size={14} style={{ display: 'inline', marginRight: '0.25rem', verticalAlign: 'middle' }} />
           {t.sentInvoicesTab}
         </button>
         <button
           style={{
             flex: 1, padding: '0.5rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', border: 'none', transition: 'all 0.2s',
-            background: activeSubTab === 'received' ? 'rgba(139,92,246,0.15)' : 'transparent',
-            color: activeSubTab === 'received' ? '#a78bfa' : '#64748b',
+            background: activeSubTab === 'received' ? 'rgba(245,197,24,0.15)' : 'transparent',
+            color: activeSubTab === 'received' ? 'var(--accent)' : '#64748b',
           }}
           onClick={() => setActiveSubTab('received')}
         >
-          <ArrowDownLeft size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+          <ArrowDownLeft size={14} style={{ display: 'inline', marginRight: '0.25rem', verticalAlign: 'middle' }} />
           {t.receivedInvoicesTab}
         </button>
       </div>
@@ -326,14 +340,14 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
       {activeSubTab === 'sent' ? (
         <div className="dashboard-stats-grid">
           {[
-            { label: t.totalSent, value: stats.total, color: '#94a3b8', icon: FileText },
-            { label: t.pending, value: stats.pending, color: '#f59e0b', icon: FileText },
-            { label: t.funded, value: stats.funded, color: '#06b6d4', icon: FileText },
-            { label: t.earnedXlm, value: stats.earned.toFixed(2), color: '#10b981', icon: TrendingUp },
-          ].map(({ label, value, color, icon: Icon }) => (
+            { label: t.totalSent, value: stats.total, icon: 'outbox' },
+            { label: t.pending, value: stats.pending, icon: 'pending_actions' },
+            { label: t.funded, value: stats.funded, icon: 'lock' },
+            { label: t.earnedXlm, value: stats.earned.toFixed(2), icon: 'payments' },
+          ].map(({ label, value, icon }) => (
             <div key={label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '0.875rem', textAlign: 'center' }}>
-              <Icon size={16} style={{ color, marginBottom: '0.25rem' }} />
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color }}>{value}</div>
+              <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '18px', marginBottom: '0.25rem' }}>{icon}</span>
+              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)' }}>{value}</div>
               <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{label}</div>
             </div>
           ))}
@@ -341,13 +355,13 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
       ) : (
         <div className="dashboard-stats-grid-3">
           {[
-            { label: t.totalReceived, value: receivedInvoices.length, color: '#a78bfa', icon: FileText },
-            { label: t.awaitingPay, value: receivedInvoices.filter(i => i.status === 'Pending').length, color: '#f59e0b', icon: FileText },
-            { label: t.paidFunded, value: receivedInvoices.filter(i => i.status === 'Funded' || i.status === 'Released').length, color: '#10b981', icon: FileText },
-          ].map(({ label, value, color, icon: Icon }) => (
+            { label: t.totalReceived, value: receivedInvoices.length, icon: 'inbox' },
+            { label: t.awaitingPay, value: receivedInvoices.filter(i => i.status === 'Pending').length, icon: 'pending_actions' },
+            { label: t.paidFunded, value: receivedInvoices.filter(i => i.status === 'Funded' || i.status === 'Released').length, icon: 'lock' },
+          ].map(({ label, value, icon }) => (
             <div key={label} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '0.875rem', textAlign: 'center' }}>
-              <Icon size={16} style={{ color, marginBottom: '0.25rem' }} />
-              <div style={{ fontSize: '1.2rem', fontWeight: 800, color }}>{value}</div>
+              <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '18px', marginBottom: '0.25rem' }}>{icon}</span>
+              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--accent)' }}>{value}</div>
               <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{label}</div>
             </div>
           ))}
@@ -362,7 +376,7 @@ export const FreelancerDashboard: React.FC<FreelancerDashboardProps> = ({
         </div>
       ) : activeInvoices.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-          <FileText size={32} style={{ marginBottom: '0.5rem', opacity: 0.4 }} />
+          <span className="material-symbols-outlined" style={{ fontSize: '32px', marginBottom: '0.5rem', opacity: 0.4, color: 'var(--accent)' }}>description</span>
           <p>{t.noPayments}</p>
         </div>
       ) : (

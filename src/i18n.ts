@@ -148,7 +148,11 @@ export const translations = {
     tutorialStep3: "Step 3: Pay the invoice. Copy the Invoice ID from the success message, go to the Pay Invoice tab, paste the ID, and click Pay. The funds will be locked securely on-chain.",
     tutorialStep4: "Step 4: Claim your funds. Go to My Invoices, select Sent Invoices, and click Release Payment. The funds will transfer to your balance and your successful escrow count increases!",
     backBtn: "Back",
-    nextBtn: "Next"
+    nextBtn: "Next",
+    tutorialStepTitle: "Demo Hint",
+    creatorStepGuide: "Enter client address: 'GDEMO55TESTNETUSERPAYMENTSFORFREELANCERS12345', amount: '50', description: 'Logo Design', and click Create Invoice.",
+    paymentStepGuide: "Paste your newly created Invoice ID (e.g. 1) and click Lookup, then click Pay.",
+    listStepGuide: "You have received the payment! Now, click 'Release Payment' (Ödemeyi Al) to claim the locked XLM into your wallet."
   },
   tr: {
     // App.tsx
@@ -299,6 +303,10 @@ export const translations = {
     tutorialStep3: "3. Adım: Faturayı ödeyin. Başarı mesajındaki Fatura ID'sini kopyalayın, Fatura Öde sekmeşine geçip ID'yi yapıştırın ve Öde'ye basın. Fonlar zincir üzerinde güvenle kilitlenecektir.",
     tutorialStep4: "4. Adım: Fonları cüzdanınıza çekin. Faturalarım sekmesine gidin, Gönderilen Faturalar'ı seçin ve Ödemeyi Al'a tıklayın. Fonlar bakiyenize aktarılacak ve emanet sayınız artacaktır!",
     backBtn: "Geri",
-    nextBtn: "İleri"
+    nextBtn: "İleri",
+    tutorialStepTitle: "Demo İpucu",
+    creatorStepGuide: "Aşağıdaki alanları doldurun. Müşteri adresi: 'GDEMO55TESTNETUSERPAYMENTSFORFREELANCERS12345', tutar: '50', açıklama: 'Logo Tasarımı' yazın ve Fatura Oluştur butonuna basın.",
+    paymentStepGuide: "Yeni oluşturduğunuz Fatura ID'sini (örn. 1) yazıp Sorgula'ya basın, ardından Ödeme Yap butonuna tıklayın.",
+    listStepGuide: "Ödeme yapıldı ve para akitte kilitlendi! Şimdi faturanın altındaki 'Ödemeyi Al' butonuna tıklayarak XLM bakiyesini cüzdanınıza çekin."
   }
 };

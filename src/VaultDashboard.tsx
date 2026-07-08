@@ -261,48 +261,52 @@ export const VaultDashboard: React.FC<VaultDashboardProps> = ({ walletAddress, r
       {/* Action Forms */}
       <div className="vault-actions-grid">
         {/* Deposit */}
-        <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: '1rem', borderRadius: '16px' }}>
-          <label className="form-label">{t.vaultDeposit}</label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input 
-              type="number" 
-              className="form-input" 
-              placeholder="0.0" 
-              value={depositAmount} 
-              onChange={e => setDepositAmount(e.target.value)} 
-              style={{ flex: 1, minWidth: 0 }}
-            />
-            <button 
-              className="btn btn-accent" 
-              style={{ padding: '0.6rem 1.1rem' }}
-              onClick={() => executeVaultCall('deposit', depositAmount)}
-              disabled={txStatus.type === 'loading' || !depositAmount}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_upward</span>
-            </button>
+        <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: '1.25rem', borderRadius: '16px' }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">{t.vaultDeposit}</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input 
+                type="number" 
+                className="form-input" 
+                placeholder="0.0" 
+                value={depositAmount} 
+                onChange={e => setDepositAmount(e.target.value)} 
+                style={{ flex: 1, minWidth: 0 }}
+              />
+              <button 
+                className="btn btn-accent" 
+                style={{ padding: '0.6rem 1.1rem' }}
+                onClick={() => executeVaultCall('deposit', depositAmount)}
+                disabled={txStatus.type === 'loading' || !depositAmount}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_upward</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Withdraw */}
-        <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: '1rem', borderRadius: '16px' }}>
-          <label className="form-label">{t.vaultWithdraw}</label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input 
-              type="number" 
-              className="form-input" 
-              placeholder="0.0" 
-              value={withdrawAmount} 
-              onChange={e => setWithdrawAmount(e.target.value)} 
-              style={{ flex: 1, minWidth: 0 }}
-            />
-            <button 
-              className="btn btn-secondary" 
-              style={{ padding: '0.6rem 1.1rem', borderColor: 'var(--accent)', color: 'var(--accent)' }}
-              onClick={() => executeVaultCall('withdraw', withdrawAmount)}
-              disabled={txStatus.type === 'loading' || !withdrawAmount}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_downward</span>
-            </button>
+        <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', padding: '1.25rem', borderRadius: '16px' }}>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label className="form-label">{t.vaultWithdraw}</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input 
+                type="number" 
+                className="form-input" 
+                placeholder="0.0" 
+                value={withdrawAmount} 
+                onChange={e => setWithdrawAmount(e.target.value)} 
+                style={{ flex: 1, minWidth: 0 }}
+              />
+              <button 
+                className="btn btn-secondary" 
+                style={{ padding: '0.6rem 1.1rem', borderColor: 'var(--accent)', color: 'var(--accent)' }}
+                onClick={() => executeVaultCall('withdraw', withdrawAmount)}
+                disabled={txStatus.type === 'loading' || !withdrawAmount}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_downward</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

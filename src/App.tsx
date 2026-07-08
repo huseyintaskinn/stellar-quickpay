@@ -81,6 +81,13 @@ const getLocalizedError = (errMsg: string, lang: 'en' | 'tr'): string => {
   return lang === 'en' ? 'Transaction failed. Please try again.' : 'İşlem başarısız oldu. Lütfen tekrar deneyin.';
 };
 
+// Server Instances
+const HORIZON_URL = 'https://horizon-testnet.stellar.org';
+const SOROBAN_RPC_URL = 'https://soroban-testnet.stellar.org';
+
+const server = new Horizon.Server(HORIZON_URL);
+const rpcServer = new rpc.Server(SOROBAN_RPC_URL);
+
 function App() {
   const [lang, setLang] = useState<'en' | 'tr'>('en');
   const t = translations[lang];
@@ -131,12 +138,7 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Server Instances
-  const HORIZON_URL = 'https://horizon-testnet.stellar.org';
-  const SOROBAN_RPC_URL = 'https://soroban-testnet.stellar.org';
-  
-  const server = new Horizon.Server(HORIZON_URL);
-  const rpcServer = new rpc.Server(SOROBAN_RPC_URL);
+
 
   const [mousePos, setMousePos] = useState({ x: -200, y: -200 });
   const [isHovering, setIsHovering] = useState(false);
@@ -371,7 +373,18 @@ function App() {
     const demoAddr = 'GDEMO55TESTNETUSERPAYMENTSFORFREELANCERS12345';
     setWalletAddress(demoAddr);
     setIsDemoActive(true);
+    setDemoStep(0);
+    setActiveTab('overview');
     await loadAllData(demoAddr);
+  };
+
+  // Handle tutorial step with auto tab switching
+  const handleTutorialStepChange = (step: number) => {
+    setDemoStep(step);
+    if (step === 0) setActiveTab('overview');
+    if (step === 1) setActiveTab('create-invoice');
+    if (step === 2) setActiveTab('pay-invoice');
+    if (step === 3) setActiveTab('invoices');
   };
 
   // Exit Demo Mode
@@ -590,7 +603,7 @@ function App() {
       <div className="cursor-trail" style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px` }} />
 
       {isDemoActive && (
-        <div className="demo-banner" style={{ background: 'rgba(245, 197, 24, 0.08)', borderColor: 'rgba(245, 197, 24, 0.2)', color: 'var(--accent)', padding: '0.6rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', zIndex: 1001, borderBottom: '1px solid rgba(245, 197, 24, 0.15)' }}>
+        <div className="demo-banner" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: '40px', background: 'rgba(245, 197, 24, 0.08)', borderColor: 'rgba(245, 197, 24, 0.2)', color: 'var(--accent)', padding: '0.6rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', zIndex: 1001, borderBottom: '1px solid rgba(245, 197, 24, 0.15)', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--accent)' }}>play_circle</span>
             <span>{t.demoModeActive}</span>
@@ -602,7 +615,7 @@ function App() {
       )}
 
       {/* ── TOP NAVBAR ── */}
-      <nav className="navbar">
+      <nav className="navbar" style={{ top: isDemoActive ? '40px' : '0px' }}>
         <div className="navbar-logo">
           <div className="navbar-logo-icon">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -650,7 +663,7 @@ function App() {
                 <div className="wallet-chip">
                   <span className="wallet-dot" />
                   <code style={{ fontSize: '0.75rem' }} title={walletAddress}>{truncateAddr(walletAddress)}</code>
-                  <button onClick={copyAddress} style={{ background: 'none', border: 'none', color: copied ? 'var(--accent-emerald)' : 'var(--text-muted)', cursor: 'pointer', padding: '0', display: 'flex', lineHeight: '1' }} title="Copy">
+                  <button onClick={copyAddress} style={{ background: 'none', border: 'none', color: copied ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', padding: '0', display: 'flex', lineHeight: '1' }} title="Copy">
                     <Copy size={11} />
                   </button>
                 </div>
@@ -680,7 +693,7 @@ function App() {
       </nav>
 
       {/* Mobile nav dropdown overlay */}
-      <div className={`mobile-nav-overlay ${mobileMenuOpen ? 'open' : ''}`}>
+      <div className={`mobile-nav-overlay ${mobileMenuOpen ? 'open' : ''}`} style={{ top: isDemoActive ? '120px' : '80px' }}>
         {walletAddress ? (
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem', background: 'rgba(255,255,255,0.02)', padding: '0.75rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
@@ -689,7 +702,7 @@ function App() {
                   <span className="wallet-dot" />
                   <code style={{ fontSize: '0.75rem' }}>{truncateAddr(walletAddress)}</code>
                 </div>
-                <button onClick={copyAddress} style={{ background: 'none', border: 'none', color: copied ? 'var(--accent-emerald)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
+                <button onClick={copyAddress} style={{ background: 'none', border: 'none', color: copied ? 'var(--accent)' : 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
                   <Copy size={12} /> {copied ? ' Copied!' : ''}
                 </button>
               </div>
@@ -727,14 +740,14 @@ function App() {
             <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>language</span> {lang === 'en' ? 'Türkçe' : 'English'}
           </button>
           <a href="https://forms.gle/DMxtyMvZkgKaEYE59" target="_blank" rel="noreferrer" className="navbar-link"
-            style={{ textDecoration: 'none', color: 'var(--accent-emerald)', padding: '0.4rem' }}>
+            style={{ textDecoration: 'none', color: 'var(--accent)', padding: '0.4rem' }}>
             {t.feedbackBtn}
           </a>
         </div>
       </div>
 
       {/* ── MAIN CONTENT ── */}
-      <div className="content-wrapper">
+      <div className="content-wrapper" style={{ marginTop: isDemoActive ? '125px' : '85px' }}>
 
         {/* Transaction state alerts */}
         {txStatus.type !== 'idle' && (
@@ -819,7 +832,7 @@ function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
                   <button 
                     className="btn btn-secondary" 
-                    onClick={() => setDemoStep(s => Math.max(0, s - 1))} 
+                    onClick={() => handleTutorialStepChange(Math.max(0, demoStep - 1))} 
                     disabled={demoStep === 0}
                     style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem' }}
                   >
@@ -830,12 +843,14 @@ function App() {
                     {[0, 1, 2, 3].map((idx) => (
                       <span 
                         key={idx} 
+                        onClick={() => handleTutorialStepChange(idx)}
                         style={{ 
                           width: '6px', 
                           height: '6px', 
                           borderRadius: '50%', 
                           background: demoStep === idx ? 'var(--accent)' : 'rgba(255,255,255,0.12)',
-                          transition: 'background 0.2s' 
+                          transition: 'background 0.2s',
+                          cursor: 'pointer'
                         }} 
                       />
                     ))}
@@ -844,7 +859,7 @@ function App() {
                   {demoStep < 3 ? (
                     <button 
                       className="btn btn-primary" 
-                      onClick={() => setDemoStep(s => s + 1)}
+                      onClick={() => handleTutorialStepChange(demoStep + 1)}
                       style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem', background: 'var(--accent)', color: '#000', borderColor: 'var(--accent)' }}
                     >
                       {t.nextBtn} <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>arrow_forward</span>
@@ -852,7 +867,7 @@ function App() {
                   ) : (
                     <button 
                       className="btn btn-primary" 
-                      onClick={() => setDemoStep(0)}
+                      onClick={() => handleTutorialStepChange(0)}
                       style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem', background: 'var(--accent)', color: '#000', borderColor: 'var(--accent)' }}
                     >
                       Restart <span className="material-symbols-outlined" style={{ fontSize: '13px' }}>replay</span>
@@ -975,7 +990,13 @@ function App() {
                           {getDynamicLeaderboard().slice(0, 5).map((entry, idx) => {
                             const isMe = entry.address === walletAddress;
                             const podiumClass = idx === 0 ? 'leaderboard-rank-1' : idx === 1 ? 'leaderboard-rank-2' : idx === 2 ? 'leaderboard-rank-3' : '';
-                            const rankLabel = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
+                            const rankLabel = idx === 0 ? (
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: 'var(--accent)' }}>workspace_premium</span>
+                            ) : idx === 1 ? (
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#cbd5e1' }}>workspace_premium</span>
+                            ) : idx === 2 ? (
+                              <span className="material-symbols-outlined" style={{ fontSize: '18px', color: '#d97706' }}>workspace_premium</span>
+                            ) : `#${idx + 1}`;
                             return (
                               <tr key={idx} className={podiumClass} style={{ background: isMe ? 'rgba(245,197,24,0.05)' : undefined }}>
                                 <td style={{ padding: '0.65rem 0.5rem', fontWeight: 800 }}>
@@ -1062,6 +1083,8 @@ function App() {
                   refreshTrigger={refreshTrigger}
                   onSuccess={() => loadAllData(walletAddress!)}
                   t={t}
+                  isDemoActive={isDemoActive}
+                  demoStep={demoStep}
                 />
               </div>
             )}
@@ -1077,6 +1100,8 @@ function App() {
                   nativeAssetContractId={NATIVE_ASSET_CONTRACT_ID}
                   onInvoiceCreated={() => setRefreshTrigger(t => t + 1)}
                   t={t}
+                  isDemoActive={isDemoActive}
+                  demoStep={demoStep}
                 />
               </div>
             )}
@@ -1095,6 +1120,8 @@ function App() {
                       handleSearchLookup(id);
                     }}
                     t={t}
+                    isDemoActive={isDemoActive}
+                    demoStep={demoStep}
                   />
                 </div>
 
@@ -1204,13 +1231,13 @@ function App() {
             <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>Created by <strong>Hüseyin Taşkın</strong></p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <a href="https://github.com/huseyintaskinn/stellar-quickpay" target="_blank" rel="noreferrer" className="footer-link" style={{ textDecoration: 'none' }}>
-                📁 GitHub Repository <ExternalLink size={11} />
+                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>folder</span> GitHub Repository <ExternalLink size={11} />
               </a>
               <a href="https://github.com/huseyintaskinn" target="_blank" rel="noreferrer" className="footer-link" style={{ textDecoration: 'none' }}>
-                👤 GitHub Profile <ExternalLink size={11} />
+                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>person</span> GitHub Profile <ExternalLink size={11} />
               </a>
-              <a href="https://forms.gle/DMxtyMvZkgKaEYE59" target="_blank" rel="noreferrer" className="footer-link" style={{ textDecoration: 'none', color: 'var(--accent-emerald)' }}>
-                💬 Share Feedback <ExternalLink size={11} />
+              <a href="https://forms.gle/DMxtyMvZkgKaEYE59" target="_blank" rel="noreferrer" className="footer-link" style={{ textDecoration: 'none', color: 'var(--accent)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>comment</span> Share Feedback <ExternalLink size={11} />
               </a>
             </div>
           </div>

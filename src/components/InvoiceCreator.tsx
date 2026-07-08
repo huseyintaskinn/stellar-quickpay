@@ -9,7 +9,7 @@ import {
   scValToNative,
 } from '@stellar/stellar-sdk';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
-import { FileText, CheckCircle2, XCircle, RefreshCw, Copy } from 'lucide-react';
+import { CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 
 interface InvoiceCreatorProps {
   walletAddress: string;
@@ -19,10 +19,12 @@ interface InvoiceCreatorProps {
   nativeAssetContractId: string;
   onInvoiceCreated: () => void;
   t: any;
+  isDemoActive?: boolean;
+  demoStep?: number;
 }
 
 export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
-  walletAddress, rpcServer, server, escrowContractId, nativeAssetContractId, onInvoiceCreated, t
+  walletAddress, rpcServer, server, escrowContractId, nativeAssetContractId, onInvoiceCreated, t, isDemoActive, demoStep
 }) => {
   const [clientAddress, setClientAddress] = useState('');
   const [amount, setAmount] = useState('');
@@ -142,10 +144,22 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-        <FileText size={20} style={{ color: '#06b6d4' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem' }}>
+        <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '22px' }}>note_add</span>
         <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{t.createTitle}</h3>
       </div>
+
+      {isDemoActive && demoStep === 1 && (
+        <div className="alert alert-info" style={{ animation: 'pulse 2s infinite', border: '1px solid var(--accent)', background: 'rgba(245,197,24,0.05)', color: 'var(--accent)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 800 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>lightbulb</span>
+            <span>{t.tutorialStepTitle}</span>
+          </div>
+          <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>
+            {t.creatorStepGuide}
+          </span>
+        </div>
+      )}
 
       {status.type !== 'idle' && (
         <div className={`alert ${status.type === 'error' ? 'alert-danger' : status.type === 'loading' ? 'alert-info' : 'alert-success'}`}
@@ -157,13 +171,13 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
       )}
 
       {status.type === 'success' && status.invoiceId && (
-        <div style={{ background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.3)', borderRadius: '10px', padding: '1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ background: 'rgba(245,197,24,0.08)', border: '1px solid rgba(245,197,24,0.2)', borderRadius: '10px', padding: '1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.8rem', color: '#94a3b8' }}>{t.invoiceIdLabel}</p>
-            <code style={{ fontSize: '1.5rem', fontWeight: 800, color: '#06b6d4' }}>#{status.invoiceId}</code>
+            <code style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--accent)' }}>#{status.invoiceId}</code>
           </div>
-          <button onClick={copyId} style={{ background: copied ? 'rgba(52,211,153,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${copied ? '#34d399' : 'rgba(255,255,255,0.1)'}`, borderRadius: '8px', padding: '0.5rem 1rem', color: copied ? '#34d399' : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}>
-            <Copy size={14} /> {copied ? 'Copied!' : 'Copy'}
+          <button onClick={copyId} style={{ background: copied ? 'rgba(245,197,24,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${copied ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}`, borderRadius: '8px', padding: '0.5rem 1rem', color: copied ? 'var(--accent)' : '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>content_copy</span> {copied ? 'Copied!' : 'Copy'}
           </button>
         </div>
       )}
@@ -187,7 +201,7 @@ export const InvoiceCreator: React.FC<InvoiceCreatorProps> = ({
           </div>
         </div>
         <button type="submit" className="btn btn-primary" disabled={status.type === 'loading'} style={{ marginTop: '0.5rem' }}>
-          {status.type === 'loading' ? <><RefreshCw size={16} className="spinner" /> {t.creatingInvoice}</> : <><FileText size={16} /> {t.createInvoiceBtn}</>}
+          {status.type === 'loading' ? <><RefreshCw size={16} className="spinner" /> {t.creatingInvoice}</> : <><span className="material-symbols-outlined" style={{ fontSize: '18px', verticalAlign: 'middle' }}>description</span> {t.createInvoiceBtn}</>}
         </button>
       </form>
     </div>

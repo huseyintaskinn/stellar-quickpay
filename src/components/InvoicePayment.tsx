@@ -9,7 +9,7 @@ import {
   scValToNative,
 } from '@stellar/stellar-sdk';
 import { StellarWalletsKit } from '@creit.tech/stellar-wallets-kit';
-import { Search, CreditCard, RefreshCw, CheckCircle2, XCircle, Clock, Ban } from 'lucide-react';
+import { RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
 
 interface Invoice {
   id: number;
@@ -27,17 +27,19 @@ interface InvoicePaymentProps {
   escrowContractId: string;
   onSuccess?: (id: string) => void;
   t: any;
+  isDemoActive?: boolean;
+  demoStep?: number;
 }
 
 const STATUS_CONFIG = {
-  Pending: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', icon: Clock, label: 'Awaiting Payment' },
-  Funded:  { color: '#06b6d4', bg: 'rgba(6,182,212,0.1)',  icon: CheckCircle2, label: 'Funded - Awaiting Release' },
-  Released:{ color: '#10b981', bg: 'rgba(16,185,129,0.1)', icon: CheckCircle2, label: 'Payment Released' },
-  Cancelled:{ color: '#ef4444', bg: 'rgba(239,68,68,0.1)', icon: Ban, label: 'Cancelled' },
+  Pending: { color: 'var(--accent)', bg: 'rgba(245,197,24,0.05)', icon: 'pending_actions', label: 'Awaiting Payment' },
+  Funded:  { color: 'var(--accent)', bg: 'rgba(245,197,24,0.08)', icon: 'lock', label: 'Funded - Awaiting Release' },
+  Released:{ color: 'var(--accent)', bg: 'rgba(245,197,24,0.1)',  icon: 'check_circle', label: 'Payment Released' },
+  Cancelled:{ color: 'rgba(255,255,255,0.4)', bg: 'rgba(255,255,255,0.02)', icon: 'cancel', label: 'Cancelled' },
 };
 
 export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
-  walletAddress, rpcServer, server, escrowContractId, onSuccess, t
+  walletAddress, rpcServer, server, escrowContractId, onSuccess, t, isDemoActive, demoStep
 }) => {
   const [invoiceId, setInvoiceId] = useState('');
   const [invoice, setInvoice] = useState<Invoice | null>(null);
@@ -172,7 +174,6 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
   };
 
   const statusConf = invoice ? STATUS_CONFIG[invoice.status] : null;
-  const StatusIcon = statusConf?.icon;
   const isClient = invoice?.client === walletAddress;
   const isFreelancer = invoice?.freelancer === walletAddress;
 
@@ -185,17 +186,29 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-        <CreditCard size={20} style={{ color: '#8b5cf6' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem' }}>
+        <span className="material-symbols-outlined" style={{ color: 'var(--accent)', fontSize: '22px' }}>payments</span>
         <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>{t.payTitle}</h3>
       </div>
 
+      {isDemoActive && demoStep === 2 && (
+        <div className="alert alert-info" style={{ animation: 'pulse 2s infinite', border: '1px solid var(--accent)', background: 'rgba(245,197,24,0.05)', color: 'var(--accent)', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 800 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>lightbulb</span>
+            <span>{t.tutorialStepTitle}</span>
+          </div>
+          <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>
+            {t.paymentStepGuide}
+          </span>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-        <input type="number" className="form-input" placeholder={t.enterInvoiceId}
+        <input type="number" id="search-invoice-input" className="form-input" placeholder={t.enterInvoiceId}
           value={invoiceId} onChange={e => setInvoiceId(e.target.value)} />
         <button className="btn btn-secondary" onClick={fetchInvoice} disabled={loadingInvoice || !invoiceId}
-          style={{ whiteSpace: 'nowrap' }}>
-          {loadingInvoice ? <RefreshCw size={16} className="spinner" /> : <Search size={16} />}
+          style={{ whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+          {loadingInvoice ? <RefreshCw size={16} className="spinner" /> : <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>search</span>}
           {t.lookupBtn}
         </button>
       </div>
@@ -209,12 +222,12 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
         </div>
       )}
 
-      {invoice && statusConf && StatusIcon && (
+      {invoice && statusConf && (
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h4 style={{ margin: 0, fontSize: '1rem' }}>{t.invoiceIdLabel} #{invoice.id}</h4>
             <span style={{ background: statusConf.bg, color: statusConf.color, border: `1px solid ${statusConf.color}40`, padding: '0.25rem 0.75rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <StatusIcon size={12} /> {statusLabel}
+              <span className="material-symbols-outlined" style={{ fontSize: '14px', color: statusConf.color }}>{statusConf.icon}</span> {statusLabel}
             </span>
           </div>
 
@@ -225,7 +238,7 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
             </div>
             <div>
               <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem' }}>{t.amount}</span>
-              <span style={{ color: '#06b6d4', fontWeight: 800, fontSize: '1.1rem' }}>{invoice.amount} XLM</span>
+              <span style={{ color: 'var(--accent)', fontWeight: 800, fontSize: '1.1rem' }}>{invoice.amount} XLM</span>
             </div>
             <div style={{ gridColumn: 'span 2' }}>
               <span style={{ color: '#64748b', display: 'block', fontSize: '0.75rem' }}>Freelancer</span>
@@ -235,16 +248,16 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
 
           {/* Action buttons */}
           {isClient && invoice.status === 'Pending' && (
-            <button className="btn" onClick={() => handlePayOrRelease('pay_invoice')} disabled={txStatus.type === 'loading'}
-              style={{ width: '100%', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', color: '#fff' }}>
-              {txStatus.type === 'loading' ? <RefreshCw size={16} className="spinner" /> : <CreditCard size={16} />}
+            <button className="btn btn-accent" onClick={() => handlePayOrRelease('pay_invoice')} disabled={txStatus.type === 'loading'}
+              style={{ width: '100%' }}>
+              {txStatus.type === 'loading' ? <RefreshCw size={16} className="spinner" /> : <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>payment</span>}
               {t.payBtn} {invoice.amount} XLM
             </button>
           )}
           {isFreelancer && invoice.status === 'Funded' && (
-            <button className="btn" onClick={() => handlePayOrRelease('release_payment')} disabled={txStatus.type === 'loading'}
-              style={{ width: '100%', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff' }}>
-              {txStatus.type === 'loading' ? <RefreshCw size={16} className="spinner" /> : <CheckCircle2 size={16} />}
+            <button className="btn btn-accent" onClick={() => handlePayOrRelease('release_payment')} disabled={txStatus.type === 'loading'}
+              style={{ width: '100%' }}>
+              {txStatus.type === 'loading' ? <RefreshCw size={16} className="spinner" /> : <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>check_circle</span>}
               {t.releaseBtn}
             </button>
           )}
@@ -252,11 +265,11 @@ export const InvoicePayment: React.FC<InvoicePaymentProps> = ({
           {/* User Warnings for unauthorized roles */}
           {!isClient && invoice.status === 'Pending' && (
             <div style={{
-              background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)',
+              background: 'rgba(245,197,24,0.06)', border: '1px solid rgba(245,197,24,0.2)',
               borderRadius: '8px', padding: '0.875rem', marginTop: '0.5rem', fontSize: '0.8rem',
-              color: '#f59e0b', lineHeight: '1.5', textAlign: 'left'
+              color: 'var(--accent)', lineHeight: '1.5', textAlign: 'left'
             }}>
-              ⚠️ <strong>{t.clientMismatch}</strong> <code style={{ display: 'block', wordBreak: 'break-all', marginTop: '0.25rem', color: '#fcd34d' }}>{invoice.client}</code>
+              <span className="material-symbols-outlined" style={{ fontSize: '15px', marginRight: '0.25rem', verticalAlign: 'middle' }}>warning</span> <strong>{t.clientMismatch}</strong> <code style={{ display: 'block', wordBreak: 'break-all', marginTop: '0.25rem', color: 'var(--accent)' }}>{invoice.client}</code>
             </div>
           )}
 
