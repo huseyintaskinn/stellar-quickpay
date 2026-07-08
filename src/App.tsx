@@ -156,9 +156,16 @@ function App() {
     const handleMouseDown = () => setCursorClicked(true);
     const handleMouseUp = () => setCursorClicked(false);
 
+    const handleResize = () => {
+      if (window.innerWidth > 900) {
+        setMobileMenuOpen(false);
+      }
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mousedown', handleMouseDown);
     window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('resize', handleResize);
 
     try {
       StellarWalletsKit.init({
@@ -190,6 +197,7 @@ function App() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
@@ -679,7 +687,7 @@ function App() {
           </div>
 
           {/* Language Switcher and Burger Button (Visible on mobile) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="mobile-controls">
             {!walletAddress && (
               <button onClick={() => setLang(lang === 'en' ? 'tr' : 'en')} className="btn btn-secondary" style={{ padding: '0.35rem 0.7rem', fontSize: '0.75rem', borderRadius: '99px' }}>
                 {lang === 'en' ? 'TR' : 'EN'}

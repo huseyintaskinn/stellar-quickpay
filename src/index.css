@@ -288,6 +288,10 @@ code, pre {
   gap: 0.65rem;
 }
 
+.mobile-controls {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .desktop-only {
     display: none !important;
@@ -297,6 +301,11 @@ code, pre {
   }
   .navbar-burger {
     display: flex !important;
+  }
+  .mobile-controls {
+    display: flex !important;
+    align-items: center;
+    gap: 0.5rem;
   }
 }
 
